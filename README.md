@@ -8,14 +8,31 @@ The repository still contains the original Windows installer/release flow, but i
 - Qt Widgets for the new local GUI frontend
 - bundled Z88 executables built from source
 
+## Product status
+
+The official end-user product remains the legacy VCL application (`Gui Plop`) distributed through the historical Windows installer.
+
+The Qt Widgets application (`plop_gui_qt.exe`) is currently a local build and development frontend. It is useful for source builds, smoke tests, and migration work, but it is not the official replacement for the VCL product.
+
 ## Main paths
 
 - end-user manual: [GuiPlop Users Manual.pdf](GuiPlop%20Users%20Manual.pdf)
 - repository analysis: [repo-analysis.md](repo-analysis.md)
 - legacy GUI module map: [gui-module-map.md](gui-module-map.md)
 - local build guide: [LOCAL_BUILD.md](LOCAL_BUILD.md)
+- official release note: [OFFICIAL_RELEASE.md](OFFICIAL_RELEASE.md)
 
-## Current local build outputs
+## Official distribution
+
+The official distribution path is still the packaged installer for the VCL application:
+
+https://github.com/davidlewistoronto/plop/releases/download/3.0.7/gui_plop_setup_3_0_7.exe
+
+That installer flow is backed by the legacy Inno Setup script in:
+
+- [plop_src/plop_xe10/gui_plop/inno_setup.iss](plop_src/plop_xe10/gui_plop/inno_setup.iss)
+
+## Local Qt build outputs
 
 A successful local Qt build produces these runtime artifacts in `build-qt/bin`:
 
@@ -57,14 +74,6 @@ The local Qt workflow was validated with:
 - installed under `C:\Users\matteo\Qt`
 
 If Qt is not installed yet, see [LOCAL_BUILD.md](LOCAL_BUILD.md) for the exact `aqtinstall` commands.
-
-## Legacy installer
-
-The original project README/release flow pointed users to the packaged installer:
-
-https://github.com/davidlewistoronto/plop/releases/download/3.0.7/gui_plop_setup_3_0_7.exe
-
-That installer path remains relevant for end users of the historical VCL application, but source development can now proceed through the local CMake flow described above.
 
 ## References
 

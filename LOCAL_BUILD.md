@@ -2,6 +2,11 @@
 
 This document describes the currently validated local Windows build flow for this repository.
 
+This is a development/build document. It does not redefine the product release policy:
+
+- official end-user release: legacy VCL `Gui Plop`
+- local migration/development build: `plop_gui_qt.exe`
+
 ## Scope
 
 Validated targets:
