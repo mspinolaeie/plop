@@ -1,0 +1,264 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/****************************************************************************
+*  Programm z88i1.c - der Iterations- Solver Part 1
+*  16.2.2005 Rieg
+****************************************************************************/
+
+/***********************************************************************
+* Windows95 und NT
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88i.h>
+#include <stdio.h>    /* FILE */
+#include <string.h>   /* strcpy */
+#endif
+#include <stdlib.h>
+/***********************************************************************
+*  Window- Function-Declarationen
+***********************************************************************/
+/***********************************************************************
+*  Function-Declarationen
+***********************************************************************/
+int dyn88i1(void);
+int ale88i(int);
+int ri188i(void);
+int z88ai(void);
+int wria88i(void);
+int w4y88i(void);
+int lan88i1(void);
+int wrim88i(FR_INT4,int);
+
+/***********************************************************************
+*  globale Variable
+***********************************************************************/
+FILE *fdyn,*fl1,*fi1,*f1y,*f4y,*fo0,*fo1,*fcfg;
+
+/*  
+**   fdyn= z88.dyn
+**   fl1 = z88i1.log
+**   fi1=  z88i1.txt
+**   f1y=  z88o1.bny
+**   f4y=  z88o4.bny
+**   fo0=  z88o0.txt
+**   fo1=  z88o1.txt
+**   fcfg= z88com.cfg
+*/ 
+
+char cdyn[1000] = "z88.dyn";
+char cl1[1000] = "z88i1.log";
+char ci1[1000] = "z88i1.txt";
+char c1y[1000] = "z88o1.bny";
+char c4y[1000] = "z88o4.bny";
+char co0[1000] = "z88o0.txt";
+char co1[1000] = "z88o1.txt";
+char cfg[1000] = "z88com.cfg";
+
+#define cdyn_file_name "z88.dyn"
+#define cl1_file_name  "z88i1.log"
+#define ci1_file_name "z88i1.txt"
+#define c1y_file_name "z88o1.bny"
+#define c4y_file_name "z88o4.bny"
+#define co0_file_name "z88o0.txt"
+#define co1_file_name "z88o1.txt"
+#define cfg_file_name "z88com.cfg"
+
+/*--------------------------------------------------------------------------
+* Pointer
+*-------------------------------------------------------------------------*/
+struct FR_SIJ *IJ;
+FR_DOUBLEAY x;
+FR_DOUBLEAY y;
+FR_DOUBLEAY z;
+FR_DOUBLEAY emod;
+FR_DOUBLEAY rnue;
+FR_DOUBLEAY qpara;
+FR_DOUBLEAY riyy;
+FR_DOUBLEAY eyy;
+FR_DOUBLEAY rizz;
+FR_DOUBLEAY ezz;
+FR_DOUBLEAY rit;
+FR_DOUBLEAY wt;
+
+FR_INT4AY ip;
+FR_INT4AY iez;
+FR_INT4AY kc;
+FR_INT4AY koi;
+FR_INT4AY ifrei; 
+FR_INT4AY ioffs;
+FR_INT4AY koffs;
+FR_INT4AY ityp;
+FR_INT4AY ivon;
+FR_INT4AY ibis;
+FR_INT4AY intord;
+
+/*--------------------------------------------------------------------------
+* Char-Arrays
+*-------------------------------------------------------------------------*/
+char cstore[256];
+char cbcall[128];
+char cbpref[128];
+char cbhelp[512];
+char cmess [256];
+
+/*--------------------------------------------------------------------------
+* Arrays
+*-------------------------------------------------------------------------*/
+FR_INT4 mcomp[21];                     /* 21 ist MAXPA */
+
+/*--------------------------------------------------------------------------
+* Variable
+*-------------------------------------------------------------------------*/
+FR_DOUBLE emode,rnuee,qparae,riyye,eyye,rizze,ezze,rite,wte,eps,rp;
+
+FR_INT4 kfoun,intore,nel,ktyp,maxit;
+FR_INT4 LANG,IDYNMEM;
+FR_INT4 ndim,nkp,ne,nfg,neg,nfgp1,nkoi,kflag,ibflag,ipflag,iqflag;
+
+/*--------------------------------------------------------------------------
+* vorbelegte Variable
+*-------------------------------------------------------------------------*/
+FR_INT4 MAXSOR=0,MAXPUF=0,MAXGS=0,MAXNFG=0,MAXK=0,MAXE=0,MAXKOI=0,MAXNEG=0;
+
+
+int wrim88i(FR_INT4 i,int iatx)
+{ return 0;
+}
+int wtyp88i(FR_INT4 k,FR_INT4 i)
+{	return 0;
+}
+int wfor88i(FR_INT4 k,FR_INT4 i)
+{	return 0;
+}
+/***********************************************************************
+* WinMain
+***********************************************************************/
+int main (int argc, char *argv[])
+{
+int iret;
+char *tmpenv;
+char tmpname [1000];
+       
+/***********************************************************************
+* Handles kommen lassen, window oeffnen
+***********************************************************************/
+
+#ifdef gui_plop_version
+if ((tmpenv = getenv ("TEMP")) == NULL && (tmpenv = getenv ("TMP")) == NULL) {
+	tmpname [0] = '\0';
+} else {
+	sprintf (tmpname, "%s\\", tmpenv);
+}
+printf ("starting z88i1, this will take a while....\n");
+#else
+	tmpname [0] = '\0';
+#endif
+
+sprintf (cl1, "%s%s", tmpname, cl1_file_name);
+sprintf (ci1, "%s%s", tmpname, ci1_file_name);
+sprintf (c1y, "%s%s", tmpname, c1y_file_name);
+sprintf (c4y, "%s%s", tmpname, c4y_file_name);
+sprintf (co0, "%s%s", tmpname, co0_file_name);
+sprintf (co1, "%s%s", tmpname, co1_file_name);
+sprintf (cfg, "%s", cfg_file_name);
+
+#ifdef gui_plop_version
+if ((tmpenv = getenv ("PLOPDIR")) == NULL) {
+	tmpname [0] = '\0';
+} else {
+	sprintf (tmpname, "%s\\", tmpenv);
+}
+#else
+	tmpname [0] = '\0';
+#endif
+sprintf (cdyn, "%s%s", tmpname, cdyn_file_name);
+printf ("looking for cdyn in %s\n", cdyn_file_name);
+
+	iret= lan88i1();
+	if(iret != 0)
+	  {
+	  ale88i(iret);
+	  return(1);
+	  }
+	iret= dyn88i1();
+	if(iret != 0)
+	  {
+	  ale88i(iret);
+	  return 1;
+	  }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Einlesen Z88I1.TXT
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	iret= ri188i();
+	if(iret != 0)
+	  {
+	  ale88i(iret);
+	  return 1;
+	  }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Rechnen
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+		iret= z88ai();
+        if(iret != 0) 
+		  {
+          ale88i(iret);
+		  return 1;
+		  }
+
+		iret= wria88i();         /* Schreiben Z88O1.TXT und Z88O1.BNY */
+        if(iret != 0) 
+		  {
+          ale88i(iret);
+		  return 1;
+		  }
+
+		iret= w4y88i();          /* Schreiben Z88O4.BNY */
+        if(iret != 0) 
+		  {
+          ale88i(iret);
+		  return 1;
+		  }
+
+		wrim88i(0,TX_ENDI1);
+        if(LANG == 1) strcpy(cmess,"FE-Prozessor Z88I1 gelaufen");
+		if(LANG == 2) strcpy(cmess,"FEA-Solver Z88I1 done");
+		printf (cmess);
+
+	return 0;
+}

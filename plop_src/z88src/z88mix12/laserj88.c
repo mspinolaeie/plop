@@ -1,0 +1,88 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* a small utility for use with Z88
+* laserj88 puts the following commands in plotfile z88o6.txt:
+* - reset
+* - landscape
+* - set to HP-GL mode
+* - reset
+* - portrait
+* - back to PCL mode
+* not magnificent, but it works .. and that counts
+* 23.3.2002 Rieg, Germany
+***********************************************************************/
+#include <stdio.h>
+
+int main(void)
+{
+FILE *ftmp, *f6;
+int c;
+
+printf("LaserJet- Commands to Z88O6.TXT ...");
+
+ftmp= fopen("z88o6.tmp","wb");
+rewind(ftmp);
+ 
+/* resetting printer */
+fputs("\x01B\x045\x00D\x00A",ftmp);
+/* landscape */
+fputs("\x01B\x026\x06C\x031\x04F\x00D\x00A",ftmp);
+/* HP-GL Mode */
+fputs("\x01B\x025\x030\x042\x00D\x00A",ftmp); 
+
+f6= fopen("z88o6.txt","rb"); 
+rewind(f6);
+
+while( (c= fgetc(f6)) != EOF)   
+  fputc(c,ftmp);
+  
+/* resetting printer */
+fputs("\x01B\x045\x00D\x00A",ftmp);
+/* portrait */
+fputs("\x01B\x026\x06C\x030\x04F\x00D\x00A",ftmp);
+/* PCL Mode */
+fputs("\x01B\x025\x030\x041\x00D\x00A",ftmp); 
+
+fclose(ftmp);
+fclose(f6);
+
+remove("z88o6.txt");
+rename("z88o6.tmp","z88o6.txt");
+
+printf("Done !\n");
+return(0);
+}

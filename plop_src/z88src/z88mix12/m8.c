@@ -1,0 +1,358 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/*****************************************************************************
+* Compilerunit m8.c enthaelt:
+*       InterDiaProc
+*       StrucDiaProc
+*       FaktorGloDiaProc
+*       FaktorZenDiaProc
+*       FaktorVerDiaProc
+*       FaktorRotDiaProc
+*       FaktorFxcorDiaProc
+* 16.9.2002 Rieg
+*****************************************************************************/ 
+/*****************************************************************************
+* Windows 95 und NT
+*****************************************************************************/
+#ifdef FR_WIN95
+#include <z88p.h>
+#include <windows.h>
+#include <stdlib.h>  /* gcvt, atof */
+#endif
+
+/*****************************************************************************
+* Function InterDiaProc zeigt Dialog- Box fuer Interface an
+*****************************************************************************/
+BOOL CALLBACK InterDiaProc(HWND hDlg, UINT message,
+                           WPARAM wParam, LPARAM lParam)
+{
+extern char cintfn[];
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT1,cintfn);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT1,cintfn,32);
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+
+/*****************************************************************************
+* Function StrucDiaProc zeigt Dialog- Box fuer Struktur an
+*****************************************************************************/
+BOOL CALLBACK StrucDiaProc(HWND hDlg, UINT message,
+                           WPARAM wParam, LPARAM lParam)
+{
+extern int iflade,iflaver,iflspa,ifscale;
+extern char cstrn[];
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT2,cstrn);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT2,cstrn,32);
+        iflade = ID_NOTLOADSTRUC;
+        iflaver= ID_NOTLOADVERF;
+        iflspa = ID_NOTLOADSPANN;
+        ifscale= IDM_YESSCALE;
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+
+/*****************************************************************************
+* Function FaktorGloDiaProc zeigt Dialog- Box fuer Globale Vergr. an
+*****************************************************************************/
+BOOL CALLBACK FaktorGloDiaProc(HWND hDlg, UINT message,
+                               WPARAM wParam, LPARAM lParam)
+{
+extern double facx,facy,facz;
+
+int  idigit= 20;
+char cfacx[31], cfacy[31], cfacz[31];
+
+/*---------------------------------------------------------------------------
+*    beim allerersten Start gehen facx, facy & facz mit je 1. rein
+*--------------------------------------------------------------------------*/
+gcvt(facx,idigit,cfacx); 
+gcvt(facy,idigit,cfacy); 
+gcvt(facz,idigit,cfacz); 
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT3,cfacx);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT4,cfacy);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT5,cfacz);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT3,cfacx,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT4,cfacy,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT5,cfacz,30);
+        facx= atof(cfacx);
+        facy= atof(cfacy);
+        facz= atof(cfacz);
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+
+/*****************************************************************************
+* Function FaktorZenDiaProc zeigt Dialog- Box fuer Globale Vergr. an
+*****************************************************************************/
+BOOL CALLBACK FaktorZenDiaProc(HWND hDlg, UINT message,
+                               WPARAM wParam, LPARAM lParam)
+{
+extern double cx,cy,cz;
+int  idigit= 20;
+char ccx[31], ccy[31], ccz[31];
+
+/*---------------------------------------------------------------------------
+* beim allerersten Start gehen cx, cy & cz mit je 0. rein
+*--------------------------------------------------------------------------*/
+gcvt(cx,idigit,ccx); 
+gcvt(cy,idigit,ccy); 
+gcvt(cz,idigit,ccz); 
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT6,ccx);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT7,ccy);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT8,ccz);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT6,ccx,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT7,ccy,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT8,ccz,30);
+        cx= atof(ccx);
+        cy= atof(ccy);
+        cz= atof(ccz);
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+
+/*****************************************************************************
+* Function FaktorVerDiaProc zeigt Dialog- Box fuer Vergr. Verschiebungen an
+*****************************************************************************/
+BOOL CALLBACK FaktorVerDiaProc(HWND hDlg, UINT message,
+                               WPARAM wParam, LPARAM lParam)
+{
+extern double fux,fuy,fuz;
+int  idigit= 20;
+char cfux[31], cfuy[31], cfuz[31];
+
+/*---------------------------------------------------------------------------
+* beim allerersten Start gehen fux, fuy & fuz mit je 100. rein
+*--------------------------------------------------------------------------*/
+gcvt(fux,idigit,cfux); 
+gcvt(fuy,idigit,cfuy); 
+gcvt(fuz,idigit,cfuz); 
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT9, cfux);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT10,cfuy);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT11,cfuz);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT9, cfux,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT10,cfuy,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT11,cfuz,30);
+        fux= atof(cfux);
+        fuy= atof(cfuy);
+        fuz= atof(cfuz);
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+
+/*****************************************************************************
+* Function FaktorRotDiaProc zeigt Dialog- Box fuer Rotatione an
+*****************************************************************************/
+BOOL CALLBACK FaktorRotDiaProc(HWND hDlg, UINT message,
+                               WPARAM wParam, LPARAM lParam)
+{
+extern double rotx,roty,rotz;
+int  idigit= 20;
+char crotx[31], croty[31], crotz[31];
+
+/*---------------------------------------------------------------------------
+* beim allerersten Start gehen roty,roty & rotz mit je 0. rein
+*--------------------------------------------------------------------------*/
+gcvt(rotx,idigit,crotx); 
+gcvt(roty,idigit,croty); 
+gcvt(rotz,idigit,crotz); 
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT12,crotx);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT13,croty);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT14,crotz);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT12,crotx,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT13,croty,30);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT14,crotz,30);
+        rotx= atof(crotx);
+        roty= atof(croty);
+        rotz= atof(crotz);
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+
+/*****************************************************************************
+* Function FaktorFxcorDiaProc zeigt Dialog- Box fuer FXCOR an
+*****************************************************************************/
+BOOL CALLBACK FaktorFxcorDiaProc(HWND hDlg, UINT message,
+                                 WPARAM wParam, LPARAM lParam)
+{
+extern double fxcor;
+int  idigit= 20;
+char cfxcor[31];
+
+/*---------------------------------------------------------------------------
+* beim allerersten Start geht fxcor mit 0.787 rein
+*--------------------------------------------------------------------------*/
+gcvt(fxcor,idigit,cfxcor); 
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT15,cfxcor);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT15,cfxcor,32);
+        fxcor= atof(cfxcor);
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+

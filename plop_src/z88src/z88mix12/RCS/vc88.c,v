@@ -1,0 +1,473 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* diese compilerunit vc88 enthaelt:
+*   vu2b88
+*   vu3b88
+*   vv2b88
+*   vv3b88
+*   vsca88
+*   vcur88
+*
+* 16.9.2002 Rieg
+***********************************************************************/
+/*****************************************************************************
+* WindowsNT und 95
+*****************************************************************************/
+#ifdef FR_WIN95
+#include <z88p.h>
+#include <math.h>   /* fabs,sin,cos */
+#endif
+
+/***********************************************************************
+*  function vu2b88
+***********************************************************************/
+int vu2b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+
+extern double facx,facy,facz,cx,cy,cz,fxcor;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+extern int ifansi;
+
+extern short ixClient, iyClient;
+        
+double fx1,fx2,fy1,fy2;
+        
+FR_INT4 i;
+
+fx1= ixClient*0.005;
+fx2= ixClient*0.5;
+fy1= iyClient*0.005;
+fy2= iyClient*0.5;
+
+if(ifansi== IDM_XY)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (long) (fx1 * (x[i] -cx) *facx*fxcor + fx2);
+    ky[i]= (long)-(fy1 * (y[i] -cy) *facy       - fy2);
+    }
+  }
+else if(ifansi== IDM_XZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (long) (fx1 * (x[i] -cx) *facx*fxcor + fx2);
+    ky[i]= (long)-(fy1 * (z[i] -cz) *facz       - fy2);
+    }
+  }
+else if(ifansi== IDM_YZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (long) (fx1 * (y[i] -cy) *facy*fxcor + fx2);
+    ky[i]= (long)-(fy1 * (z[i] -cz) *facz       - fy2);
+    }
+  }
+  
+return 0;
+}
+
+/***********************************************************************
+*  function vu3b88
+***********************************************************************/
+int vu3b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+
+extern double facx,facy,facz,cx,cy,cz,rotx,roty,rotz,fxcor;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+extern short ixClient, iyClient;
+
+double gx,gy,gz,hx,hy,hz,wx,wy,wz,sa,sb,sc,sd,se,sf,sg,sh,si,fpi;
+double fx1,fx2,fy1,fy2;
+        
+FR_INT4 i;
+
+fx1= ixClient*0.005;
+fx2= ixClient*0.5;
+fy1= iyClient*0.005;
+fy2= iyClient*0.5;
+
+fpi= 0.0174533;
+        
+wx= rotx*fpi;
+wy= roty*fpi;
+wz= rotz*fpi;
+        
+sa= cos(wy) * cos(wz);
+sb= cos(wy) * sin(wz);
+sc= -sin(wy);
+sd= sin(wx) * sin(wy) * cos(wz) - cos(wx) * sin(wz);
+se= sin(wx) * sin(wy) * sin(wz) + cos(wx) * cos(wz);
+sf= sin(wx) * cos(wy);
+sg= cos(wx) * sin(wy) * cos(wz) + sin(wx) * sin(wz);
+sh= cos(wx) * sin(wy) * sin(wz) - sin(wx) * cos(wz);
+si= cos(wx) * cos(wy);
+
+for(i= 1; i <= nkp; i++)
+  {
+  gx= (x[i] - cx) * facx;
+  gy= (y[i] - cy) * facy;
+  gz= (z[i] - cz) * facz;
+  hx= gx * sa + gy * sb + gz * sc;
+  hy= gx * sd + gy * se + gz * sf;
+  hz= gx * sg + gy * sh + gz * si;
+  kx[i]= (long) (fx1 * ((hx - hy) * 0.866) * fxcor + fx2);
+  ky[i]= (long)-(fy1 * ((hx + hy) * 0.500 +hz)     - fy2);
+  }
+return 0;
+}
+
+/******************* ab hier verformt *********************************/
+
+/***********************************************************************
+*  function vv2b88
+***********************************************************************/
+int vv2b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+extern FR_DOUBLEAY ux;
+extern FR_DOUBLEAY uy;
+extern FR_DOUBLEAY uz;
+
+extern double facx,facy,facz,cx,cy,cz,fux,fuy,fuz,fxcor;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+extern short ixClient, iyClient;
+
+extern int ifansi;
+
+double fx1,fx2,fy1,fy2;
+        
+FR_INT4 i;
+
+fx1= ixClient*0.005;
+fx2= ixClient*0.5;
+fy1= iyClient*0.005;
+fy2= iyClient*0.5;
+
+if(ifansi== IDM_XY)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (long) (fx1 * ( (x[i] +fux* ux[i] )-cx) *facx*fxcor + fx2);
+    ky[i]= (long)-(fy1 * ( (y[i] +fuy* uy[i] )-cy) *facy       - fy2);
+    }
+  }
+else if(ifansi== IDM_XZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (long) (fx1 * ( (x[i] +fux* ux[i] )-cx) *facx*fxcor + fx2);
+    ky[i]= (long)-(fy1 * ( (z[i] +fuz* uz[i] )-cz) *facz       - fy2);
+    }
+  }
+else if(ifansi== IDM_YZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (long) (fx1 * ( (y[i] +fuy* uy[i] )-cy) *facy*fxcor + fx2);
+    ky[i]= (long)-(fy1 * ( (z[i] +fuz* uz[i] )-cz) *facz       - fy2);
+    }
+  }
+
+return 0;
+}
+
+/***********************************************************************
+*  function vv3b88
+***********************************************************************/
+int vv3b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+extern FR_DOUBLEAY ux;
+extern FR_DOUBLEAY uy;
+extern FR_DOUBLEAY uz;
+
+extern double facx,facy,facz,cx,cy,cz,rotx,roty,rotz,fux,fuy,fuz,fxcor;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+extern short ixClient, iyClient;
+
+double gx,gy,gz,hx,hy,hz,wx,wy,wz,sa,sb,sc,sd,se,sf,sg,sh,si,fpi;
+
+double fx1,fx2,fy1,fy2;
+        
+FR_INT4 i;
+
+fx1= ixClient*0.005;
+fx2= ixClient*0.5;
+fy1= iyClient*0.005;
+fy2= iyClient*0.5;
+
+fpi= 0.0174533;
+        
+wx= rotx*fpi;
+wy= roty*fpi;
+wz= rotz*fpi;
+        
+sa= cos(wy) * cos(wz);
+sb= cos(wy) * sin(wz);
+sc= -sin(wy);
+sd= sin(wx) * sin(wy) * cos(wz) - cos(wx) * sin(wz);
+se= sin(wx) * sin(wy) * sin(wz) + cos(wx) * cos(wz);
+sf= sin(wx) * cos(wy);
+sg= cos(wx) * sin(wy) * cos(wz) + sin(wx) * sin(wz);
+sh= cos(wx) * sin(wy) * sin(wz) - sin(wx) * cos(wz);
+si= cos(wx) * cos(wy);
+
+for(i= 1; i <= nkp; i++)
+  {
+  gx= (x[i] + fux * ux[i] - cx) * facx;
+  gy= (y[i] + fuy * uy[i] - cy) * facy;
+  gz= (z[i] + fuz * uz[i] - cz) * facz;
+  hx= gx * sa + gy * sb + gz * sc;
+  hy= gx * sd + gy * se + gz * sf;
+  hz= gx * sg + gy * sh + gz * si;
+  kx[i]= (long) (fx1 * ((hx - hy) * 0.866) * fxcor + fx2);
+  ky[i]= (long)-(fy1 * ((hx + hy) * 0.500 +hz)     - fy2);
+  }
+return 0;
+}
+
+/***********************************************************************
+*  function vsca88
+***********************************************************************/
+int vsca88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+
+extern double facx,facy,facz,cx,cy,cz;
+extern double xmin,xmax,ymin,ymax,zmin,zmax;
+
+extern FR_INT4 ndim,nkp;
+extern int  ifscale;
+
+double eps= 1e-10;
+
+FR_INT4 i;
+
+if(ndim == 2L)
+  {
+  xmin= x[1];
+  xmax= x[1];
+  ymin= y[1];
+  ymax= y[1];
+
+  for(i= 1L; i <= nkp; i++)
+    {
+    if( x[i] < xmin) xmin= x[i];
+    if( x[i] > xmax) xmax= x[i];
+    if( y[i] < ymin) ymin= y[i];
+    if( y[i] > ymax) ymax= y[i];
+    }
+
+  if(fabs(ymax - ymin) > eps)
+    {
+    facx= 100./(xmax - xmin);
+    facy= 100./(ymax - ymin);
+
+    if(facx > facy) facx= facy;
+    else            facy= facx;
+    facz= 0.;
+    }
+  else
+    {
+    facx= 100./(xmax - xmin);
+    facy= facx;
+    facz= 0.;
+    }  
+
+  cx= (xmin + xmax)*0.5;
+  cy= (ymin + ymax)*0.5;
+  cz= 0.;
+  }
+
+else    
+  {
+  xmin= x[1];
+  xmax= x[1];
+  ymin= y[1];
+  ymax= y[1];
+  zmin= z[1];
+  zmax= z[1];
+
+  for(i= 1L; i <= nkp; i++)
+    {
+    if( x[i] < xmin) xmin= x[i];
+    if( x[i] > xmax) xmax= x[i];
+    if( y[i] < ymin) ymin= y[i];
+    if( y[i] > ymax) ymax= y[i];
+    if( z[i] < zmin) zmin= z[i];
+    if( z[i] > zmax) zmax= z[i];
+    }
+
+  if(fabs(ymax -ymin) > eps && fabs(zmax - zmin) > eps)
+    {
+    facx= 100./(xmax - xmin);
+    facy= 100./(ymax - ymin);
+    facz= 100./(zmax - zmin);
+
+    if     (facx <= facy && facx <= facz) facy= facz= facx;
+    else if(facy <= facx && facy <= facz) facx= facz= facy;
+    else if(facz <= facy && facz <= facx) facy= facx= facz;
+    }
+  else
+    {
+    facx= 100./(xmax - xmin);
+    facy= facx;
+    facz= facx;
+    }  
+
+  cx= (xmin + xmax)*0.5;
+  cy= (ymin + ymax)*0.5;
+  cz= (zmin + zmax)*0.5;
+  }
+
+ifscale= IDM_NOSCALE;
+return 0;
+}
+
+/***********************************************************************
+*  function vcur88
+***********************************************************************/
+int vcur88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+
+extern double xmin,xmax,ymin,ymax,zmin,zmax;
+
+extern FR_INT4 ndim,nkp;
+extern int  ifvcur;
+
+FR_INT4 i;
+
+if(ndim == 2L)
+  {
+  xmin= x[1];
+  xmax= x[1];
+  ymin= y[1];
+  ymax= y[1];
+
+  for(i= 1L; i <= nkp; i++)
+    {
+    if( x[i] < xmin) xmin= x[i];
+    if( x[i] > xmax) xmax= x[i];
+    if( y[i] < ymin) ymin= y[i];
+    if( y[i] > ymax) ymax= y[i];
+    }
+  }
+else    
+  {
+  xmin= x[1];
+  xmax= x[1];
+  ymin= y[1];
+  ymax= y[1];
+  zmin= z[1];
+  zmax= z[1];
+
+  for(i= 1L; i <= nkp; i++)
+    {
+    if( x[i] < xmin) xmin= x[i];
+    if( x[i] > xmax) xmax= x[i];
+    if( y[i] < ymin) ymin= y[i];
+    if( y[i] > ymax) ymax= y[i];
+    if( z[i] < zmin) zmin= z[i];
+    if( z[i] > zmax) zmax= z[i];
+    }
+  }
+
+ifvcur= 1;
+return 0;
+}
+
+@

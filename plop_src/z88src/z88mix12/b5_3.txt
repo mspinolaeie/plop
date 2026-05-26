@@ -1,0 +1,1 @@
+ 2   0   1      2 x 2 Gausspunkte pro FE, KFLAG 0, Vergleichs. GEH

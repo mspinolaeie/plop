@@ -1,0 +1,1505 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  Z88O fuer Windows
+*  4.10.2005 RIEG
+***********************************************************************/
+/***********************************************************************
+* Windows 95 und NT
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88o.h>
+#include <windows.h>
+#include <commctrl.h>
+#include <commdlg.h>
+#include <gl\gl.h>
+#include <string.h>  /* strcpy */
+#include <stdio.h>   /* fopen, fprintf, fclose */
+#endif
+
+/***********************************************************************
+* Font- Structure GLFONT
+***********************************************************************/
+typedef struct
+    {
+    GLuint base;        /* DisplayList Nr.erstes Zeichen */
+    int    widths[256]; /* Zeichenweite in Pixels */
+    int    height;      /* Zeichenhoehe */
+    } GLFONT;
+
+/**********************************************************
+* Deklaration von Window- Functions
+**********************************************************/
+LRESULT CALLBACK Z88O_WinProc(HWND, UINT, WPARAM, LPARAM);
+HWND             InitToolBar (HWND hParent);
+BOOL    CALLBACK StrucDiaProc(HWND, UINT, WPARAM, LPARAM);
+BOOL    CALLBACK FaktorVerDiaProc(HWND,UINT,WPARAM,LPARAM);
+BOOL    CALLBACK FaktorRotDiaProc(HWND,UINT,WPARAM,LPARAM);
+BOOL    CALLBACK FaktorZmDiaProc( HWND,UINT,WPARAM,LPARAM);
+BOOL    CALLBACK KnotenDiaProc(   HWND,UINT,WPARAM,LPARAM);
+BOOL    CALLBACK ElementDiaProc(  HWND,UINT,WPARAM,LPARAM);
+void    PopFileInitialize(HWND) ;
+BOOL    PopFileOpenDlg(HWND);
+
+/**********************************************************
+* Deklaration von User-Functions
+**********************************************************/
+int      dyn88o(void);
+void     ri1x88(void);
+int      ro2x88(void);
+int      ro8x88(void);
+int      rogl88(void);
+int      wlog88o(FR_INT4,int);
+int      ale88o(int);
+int      lan88o(void);
+int      vu3b88(void);
+int      vv3b88(void);
+int      vsca88(void);
+int      vcur88(void);
+int      stro88(void);
+int      snow88(void);
+int      fvx88(void);
+int      fvy88(void);
+int      fvz88(void);
+int      tet188(void);
+int      tet288(void);
+int      tet388(void);
+int      tet488(void);
+int      tet588(void);
+int      fsca88(void);
+int      malk88(void);
+
+GLFONT * FontCreate(HDC hdc,const char *typeface,
+                    int height,int weight,DWORD italic);
+void	 FontPuts(GLFONT *font, const char *cs);
+void     FontDelete(GLFONT *font);
+
+/**********************************************************
+*  externe Variable
+**********************************************************/
+HINSTANCE    hInstance,hProgram;
+
+HMENU        hMenuGer,hMenuEng;
+
+HCURSOR      waitcur;
+
+HWND         hWnd,hToolBar;
+
+OPENFILENAME ofn;
+
+HDC          hDC;
+HGLRC        hRC;
+
+GLFONT       *Font;
+
+int          iRb=1,ixClient= 1024,iyClient= 740,ix,iy;
+
+PIXELFORMATDESCRIPTOR pfd = {
+    sizeof(PIXELFORMATDESCRIPTOR), /* WORD  nSize        */
+    1,                             /* WORD  nVersion     */
+    PFD_DRAW_TO_WINDOW |           /* DWORD dwFlags      */
+    PFD_SUPPORT_OPENGL |
+    PFD_DOUBLEBUFFER,
+    PFD_TYPE_RGBA,                 /* BYTE  iPixelType   */
+    32,                            /* BYTE  cColorBits   */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,     /* brauchen wir nicht */
+    16,                            /* BYTE  cDepthBits   */
+    0,                             /* BYTE  cStencilBits */
+    0,                             /* BYTE  cAuxBuffers  */
+    PFD_MAIN_PLANE,                /* BYTE  iLayerType   */
+    0,0,0,0};                      /* brauchen wir nicht */
+
+FILE *fdyn,*fwlo,*fi1,*fo2,*fo8,*fcfg;
+
+/*
+** fdyn= z88.dyn
+** fwlo= z88o.log
+** fo2=  z88o2.txt
+** fi1=  z88i1.txt
+** fo8=  z88o8.txt
+** fcfg= z88com.cfg
+*/ 
+
+FR_DOUBLEAY x;
+FR_DOUBLEAY y;
+FR_DOUBLEAY z;
+
+FR_DOUBLEAY ux;
+FR_DOUBLEAY uy;
+FR_DOUBLEAY uz;
+
+FR_DOUBLEAY xv;
+FR_DOUBLEAY yv;
+FR_DOUBLEAY zv;
+
+FR_DOUBLEAY sep;
+FR_DOUBLEAY sne;
+
+FR_INT4AY   koi;
+
+FR_INT4AY   ityp;
+FR_INT4AY   koffs;
+
+FR_INT4AY   iep;
+FR_INT4AY   ifarbe;
+FR_INT4AY   jfarbe;
+
+FR_DOUBLE   xe[9];
+FR_DOUBLE   ye[9];
+FR_DOUBLE   ze[9];
+
+FR_DOUBLE   vx[13];
+FR_DOUBLE   vy[13];
+FR_DOUBLE   vz[13];
+
+FR_DOUBLE   fspa[10];
+
+FR_INT4     kf[9];
+
+GLfloat   rot[9];
+GLfloat gruen[9];
+GLfloat  blau[9];
+
+GLfloat back_col[4];
+GLfloat specula0[4];
+GLfloat specula1[4];
+GLfloat specula2[4];
+GLfloat ambient0[4];
+GLfloat ambient1[4];
+GLfloat diffuse0[4];
+GLfloat diffuse1[4];
+GLfloat positio0[4];
+GLfloat positio1[4];
+GLfloat positio2[4];
+GLfloat spec_mat[4];
+GLfloat diff_mat[4];
+GLfloat shine[1];
+GLfloat hide_col[3];
+GLfloat hide_off[2];
+GLfloat node_col[3];
+GLfloat elem_col[3];
+
+FR_DOUBLE xx= 0., yy=0.;
+FR_DOUBLE rx= 0., ry= 0., rz= 0., s= 1., tx=0., ty=0.;
+
+FR_DOUBLE xm= -100.0, xp= 100.0;
+FR_DOUBLE ym=  -60.0, yp=  60.0;  /* ausmessen ! */
+FR_DOUBLE zm= -100.0, zp= 100.0;
+
+FR_DOUBLE xw= 100.;
+
+FR_DOUBLE fux= 100., fuy= 100., fuz= 100.;
+FR_DOUBLE facx= 1.,facy= 1.,facz= 1.;
+FR_DOUBLE cx= 0.,cy= 0.,cz= 0.;
+FR_DOUBLE rotx= 0.,roty= 0.,rotz= 0.;
+FR_DOUBLE xmin,xmax,ymin,ymax,zmin,zmax,fycor;
+FR_DOUBLE fzoom= 1.1;
+
+FR_DOUBLE sigmin,sigmax=0.,siginc;
+FR_DOUBLE snemin,snemax=0.,sneinc;
+FR_DOUBLE fxmin,fxmax=-1e-10,fxinc;
+FR_DOUBLE fymin,fymax=-1e-10,fyinc;
+FR_DOUBLE fzmin,fzmax=-1e-10,fzinc;
+
+FR_INT4 MAXKOI,MAXE,MAXK;
+FR_INT4 IDYNMEM,LANG;
+
+FR_INT4 ndim,nkp,ne,nfg,neg,iepanz,kflag,ibflag,ipflag,iqflag;
+FR_INT4 i,j,idummy,jdummy,kofold;
+FR_INT4 izoom= 1;
+FR_INT4 jkvon= 0,jkbis= 0,jevon= 0,jebis= 0;
+
+int iflade= ID_NOTLOADSTRUC;
+int iflaver=ID_NOTLOADVERF;
+int iflspa= ID_NOTLOADSPANN;
+int ifkom=  ID_FUNKEY;
+
+int ifmaus= IDM_ZOOM;
+int ifverf= IDM_UNVERFORMT;
+int if3d  = IDM_LIGHT;
+int iflabe= IDM_NOLABELS;
+int ifscale=IDM_YESSCALE;
+int ifvcur;
+
+int  iret,iplot;
+
+int  IB,IH;
+int  imatrix=1;
+
+size_t laenge;
+
+char cline[256];
+
+char  cdyn[8]   = "z88.dyn";
+char  clog[12]  = "z88o.log";
+char  cstrn[32] = "z88i1.txt";
+char  co2[10]   = "z88o2.txt";
+char  co8[10]   = "z88o8.txt";
+char  cfg[11]   = "z88com.cfg";
+
+char  cfname[256];
+char  ctname[256];
+
+/*--------------------------------------------------------------------------
+* Char-Arrays
+*-------------------------------------------------------------------------*/
+char cstore[256];
+char cbcall[128];
+char cbpref[128];
+char cbhelp[512];
+char cmess [256];
+
+/**********************************************************
+* Hauptprogramm mit Message- Loop
+**********************************************************/
+int WINAPI WinMain(HINSTANCE hInstance,
+                   HINSTANCE hPrevInstance,
+                   PSTR szCmdLine, int iCmdShow)
+{
+extern HINSTANCE hProgram;
+
+extern HWND      hWnd;
+extern int       ixClient,iyClient;
+
+HACCEL           hAccel;
+MSG              msg;
+WNDCLASSEX       wndclass;
+
+char             capname[10];
+
+/*---------------------------------------------------------
+* Window registrieren
+*--------------------------------------------------------*/
+hProgram= hInstance;
+
+strcpy(capname, "Z88O");
+
+wndclass.cbSize        = sizeof(wndclass);
+wndclass.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+wndclass.lpfnWndProc   = Z88O_WinProc;
+wndclass.cbClsExtra    = 0;
+wndclass.cbWndExtra    = 0;
+wndclass.hInstance     = hProgram;
+wndclass.hIcon         = LoadIcon(hProgram,
+                           MAKEINTRESOURCE(ICO_Z88O));
+wndclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
+wndclass.hbrBackground = NULL;
+wndclass.lpszMenuName  = NULL;
+wndclass.lpszClassName = capname;
+wndclass.hIconSm       = NULL;
+
+RegisterClassEx(&wndclass);
+
+/*---------------------------------------------------------
+* Window erzeugen
+*--------------------------------------------------------*/
+hWnd = CreateWindow(capname,
+                    "Z88O",
+                    WS_OVERLAPPEDWINDOW |
+                    WS_CLIPCHILDREN |
+                    WS_CLIPSIBLINGS ,
+                    0,0,
+                    ixClient,iyClient,
+                    NULL, NULL, hProgram, NULL);
+if(!hWnd)
+  {
+  MessageBox(NULL,"Hauptfenster kann nicht erzeugt werden!",
+             "Z88O",MB_OK | MB_ICONINFORMATION);
+  return (0);
+  }
+
+/*---------------------------------------------------------
+* Toolbar ermoeglichen
+*--------------------------------------------------------*/
+InitCommonControls();
+
+/*---------------------------------------------------------
+* Window darstellen und updaten
+*--------------------------------------------------------*/
+ShowWindow(hWnd,iCmdShow);
+UpdateWindow(hWnd);
+
+/*---------------------------------------------------------
+* Accelerators laden
+*--------------------------------------------------------*/
+hAccel= LoadAccelerators(hInstance,capname);
+
+/*---------------------------------------------------------
+* Message- Loop: Ereigneisse abfangen
+*--------------------------------------------------------*/
+while(GetMessage(&msg, NULL, 0, 0))
+  {
+  if(!TranslateAccelerator(hWnd,hAccel,&msg))
+    {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+    }
+  }
+
+return msg.wParam;
+}
+
+/**********************************************************
+* Main Window Procedure: Das eigentliche Steuerprogramm
+**********************************************************/
+LRESULT CALLBACK Z88O_WinProc(HWND hWnd, UINT Message,
+                             WPARAM wParam, LPARAM lParam)
+{
+HMENU hMenu;
+
+int   iPF,imess;
+
+extern char  cmess[];
+
+/*----------------------------------------------------------------------
+* Los gehts - je nach Message verzweigen
+*---------------------------------------------------------------------*/
+switch(Message)
+  {
+/*----------------------------------------------------------------------
+* WM_CREATE
+*---------------------------------------------------------------------*/
+  case WM_CREATE:
+
+/*======================================================================
+* hInstance kommen lassen
+*=====================================================================*/
+    hInstance= (HINSTANCE)GetWindowLong(hWnd,GWL_HINSTANCE);
+
+/*======================================================================
+* Wartecursor anlegen
+*=====================================================================*/
+    waitcur= LoadCursor(hInstance,MAKEINTRESOURCE(CUR_Z88O));
+
+/*======================================================================
+* Sprache feststellen
+*=====================================================================*/
+    iret= lan88o();
+
+    if(iret != 0)
+      {
+      ale88o(iret);
+      PostQuitMessage(0);
+      return(1);
+      }
+
+    hMenuGer= LoadMenu(hInstance,"GERMAN");
+    hMenuEng= LoadMenu(hInstance,"ENGLISH");
+
+    if(LANG == 1) SetMenu(hWnd,hMenuGer);
+    if(LANG == 2) SetMenu(hWnd,hMenuEng);
+
+/*======================================================================
+* dynamischen Speicher anfordern
+*=====================================================================*/
+    iret= dyn88o();
+    if(iret != 0)
+      {
+      ale88o(iret);
+      PostQuitMessage(0);
+      return(1);
+      }
+
+/*======================================================================
+* FYCOR, Farben, Licht und Material einlesen
+*=====================================================================*/
+    iret= rogl88();
+    if(iret != 0)
+      {
+      ale88o(iret); 
+      PostQuitMessage(0);
+      return 0;
+      }
+
+    ym*= fycor;
+    yp*= fycor;
+
+/*======================================================================
+* Toolbar
+*=====================================================================*/
+    hToolBar= InitToolBar(hWnd);
+
+/*======================================================================
+* Fileauswahlbox initialisiren
+*=====================================================================*/
+    PopFileInitialize(hWnd);
+
+/*======================================================================
+* OpenGL aktivieren
+*=====================================================================*/
+    hDC = GetDC(hWnd);
+    iPF = ChoosePixelFormat(hDC, &pfd);
+    SetPixelFormat(hDC, iPF, &pfd);
+    hRC = wglCreateContext(hDC);
+    wglMakeCurrent(hDC, hRC);
+
+    Font= FontCreate(hDC,"Helvetica",20,0,1);
+
+    IB= ixClient;
+    IH= iyClient-48;
+
+    glViewport(0,0,IB,IH);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(xm,xp,ym,yp,zm,zp);
+
+  return 0;
+
+/*----------------------------------------------------------------------
+* case WM_INITMENU
+*---------------------------------------------------------------------*/
+  case WM_INITMENU:
+    hMenu= GetMenu(hWnd);
+
+    CheckMenuItem(hMenu,IDM_UNVERFORMT,   MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,IDM_VERFORMT,     MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,ifverf,           MF_CHECKED   | MF_BYCOMMAND);   
+
+    CheckMenuItem(hMenu,IDM_LIGHT,        MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,IDM_HIDDEN,       MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,IDM_SHOWSPANN,    MF_UNCHECKED | MF_BYCOMMAND); 
+    CheckMenuItem(hMenu,IDM_SHOWGAUSS,    MF_UNCHECKED | MF_BYCOMMAND); 
+    CheckMenuItem(hMenu,IDM_SHOWVX,       MF_UNCHECKED | MF_BYCOMMAND); 
+    CheckMenuItem(hMenu,IDM_SHOWVY,       MF_UNCHECKED | MF_BYCOMMAND); 
+    CheckMenuItem(hMenu,IDM_SHOWVZ,       MF_UNCHECKED | MF_BYCOMMAND); 
+    CheckMenuItem(hMenu,if3d,             MF_CHECKED   | MF_BYCOMMAND);   
+
+    CheckMenuItem(hMenu,IDM_NOLABELS,     MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,IDM_KNOTEN,       MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,IDM_ELEMENTE,     MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,iflabe,           MF_CHECKED   | MF_BYCOMMAND);   
+
+    CheckMenuItem(hMenu,IDM_YESSCALE,     MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,IDM_NOSCALE,      MF_UNCHECKED | MF_BYCOMMAND);   
+    CheckMenuItem(hMenu,ifscale,          MF_CHECKED   | MF_BYCOMMAND);   
+
+  return 0;
+
+/*----------------------------------------------------------------------
+* WM_NOTIFY
+*---------------------------------------------------------------------*/
+  case WM_NOTIFY:
+    {
+    LPNMHDR pnmh= (LPNMHDR) lParam;
+    LPSTR   pReply;
+
+    if(pnmh->code == TTN_NEEDTEXT)
+      {
+      LPTOOLTIPTEXT lpttt= (LPTOOLTIPTEXT) lParam;
+
+      switch(lpttt->hdr.idFrom)
+        {
+        case ITC_RUN:
+          if(LANG == 1) pReply= "Start frei";
+          if(LANG == 2) pReply= "Go";
+        break;
+
+        case ITC_FILE:
+          if(LANG == 1) pReply= "Strukturfile angeben";
+          if(LANG == 2) pReply= "define structure file";
+        break;
+
+        case ITC_MAUS:
+          if(LANG == 1) pReply= 
+          "Zoom-Schieben-Rotieren ueber Tastatur (aus) oder Maus (ein)";
+          if(LANG == 2) pReply= 
+          "Zoom-Pan-Rotate by Keyboard (off) or by Mouse (on)";
+        break;
+
+        case ITC_HELP:
+          if(LANG == 1) pReply= "OnLine-Hilfe fuer Plotprogramm";
+          if(LANG == 2) pReply= "OnLine Help for Plot Program";
+        break;
+
+        case ITC_UNVERFORMT:
+          if(LANG == 1) pReply= "Zeige unverformte Struktur";
+          if(LANG == 2) pReply= "Show Undeflected Structure";
+        break;
+
+        case ITC_VERFORMT:
+          if(LANG == 1) pReply= "Zeige verformte Struktur";
+          if(LANG == 2) pReply= "Show Deflected Structure";
+        break;
+
+        case ITC_LIGHT:
+          if(LANG == 1) pReply= "Licht an";
+          if(LANG == 2) pReply= "Light on";
+        break;
+
+        case ITC_HIDDEN:
+          if(LANG == 1) pReply= 
+          "Verdeckte Linien (keine Labels) oder Netz (Labels)";
+          if(LANG == 2) pReply= 
+          "Hidden Line (no labels) or mesh (labels for elements and nodes)";
+        break;
+
+        case ITC_SHOWSPANN:
+          if(LANG == 1) pReply= "Vergleichsspannungen in den Eckknoten";
+          if(LANG == 2) pReply= "von Mises Stresses in corner nodes";
+        break;
+
+        case ITC_SHOWGAUSS:
+          if(LANG == 1) pReply= "Vergleichsspannungen pro Element gemittelt";
+          if(LANG == 2) pReply= "von Mises Stresses mean values per Element";
+        break;
+
+        case ITC_SHOWVX:
+          if(LANG == 1) pReply= "Zeige X-Verschiebungen";
+          if(LANG == 2) pReply= "Show X Displacements";
+        break;
+
+        case ITC_SHOWVY:
+          if(LANG == 1) pReply= "Zeige Y-Verschiebungen";
+          if(LANG == 2) pReply= "Show Y Displacements";
+        break;
+
+        case ITC_SHOWVZ:
+          if(LANG == 1) pReply= "Zeige Z-Verschiebungen";
+          if(LANG == 2) pReply= "Show Z Displacements";
+        break;
+
+        case ITC_YESSCALE:
+          if(LANG == 1) pReply= "Auto-Skalieren";
+          if(LANG == 2) pReply= "AutoScale";
+        break;
+
+        }
+      lstrcpy(lpttt->szText,pReply);
+      }
+    return 0;  /* sehr wichtig */
+    }
+
+/*----------------------------------------------------------------------
+* WM_DESTROY
+*---------------------------------------------------------------------*/
+  case WM_DESTROY:
+    wglMakeCurrent(hDC,NULL);
+    wglDeleteContext(hRC);
+    PostQuitMessage(0);
+  return 0;
+
+/*----------------------------------------------------------------------
+* case WM_COMMAND
+*---------------------------------------------------------------------*/
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+/*======================================================================
+* Info
+*=====================================================================*/ 
+      case IDM_WER:
+        if(LANG == 1) strcpy(cmess,
+"Plotprogramm Z88O fuer Windows\n\
+Version 12.0\n\
+Copyright Univ.-Prof.Dr.-Ing. Frank Rieg,\n\
+Universitaet Bayreuth, 2005\n\
+Alle Rechte vorbehalten");
+          if(LANG == 2) strcpy(cmess,
+"Plot Program Z88O for Windows\n\
+Version 12.0\n\
+Copyright Prof.Dr. Frank Rieg,\n\
+University of Bayreuth, Germany 2005\n\
+All rights reserved");
+        MessageBox(hWnd,cmess,"Z88O", MB_OK | MB_ICONINFORMATION);
+      return 0;
+
+/*======================================================================
+* Strukturfile
+*=====================================================================*/                           
+      case IDM_FILE:
+      case ITC_FILE:
+        if(PopFileOpenDlg(hWnd))
+          {
+          iflade = ID_NOTLOADSTRUC;
+          iflaver= ID_NOTLOADVERF;
+          iflspa = ID_NOTLOADSPANN;
+          ifscale= IDM_YESSCALE;
+          rotx= 0.;
+          roty= 0.;
+          rotz= 0.;
+          }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"keine Datei ausgewaehlt");
+          if(LANG == 2) strcpy(cmess,"You did not choose any file");
+          MessageBox(hWnd,cmess,"Z88O", MB_OK | MB_ICONINFORMATION);
+          }
+      return 0;
+
+/*======================================================================
+* Ende
+*=====================================================================*/
+      case IDM_XIT:
+        if(LANG == 1) strcpy(cmess,"Z88O beenden ?");
+        if(LANG == 2) strcpy(cmess,"Quit Z88O ?");
+        imess= MessageBox(hWnd,cmess,"Z88O",MB_OKCANCEL | MB_ICONQUESTION);
+        if(imess == IDOK)     PostQuitMessage(0);
+        if(imess == IDCANCEL) return 0;  
+      return 0; 
+
+/*======================================================================
+* Go: Strukturdaten laden
+*=====================================================================*/
+      case IDM_RUN:
+      case ITC_RUN:
+        SetCursor(waitcur);
+        ShowCursor(TRUE);
+
+        fi1= fopen(cstrn,"r");
+        if(fi1 == NULL)
+          {
+          wlog88o(0,LOG_NOSTRFI);
+          fclose(fwlo);
+          ale88o(AL_NOSTRFI);
+          PostQuitMessage(0);
+          return(0);
+          }
+        rewind(fi1);
+
+        ri1x88();  
+        iflade= ID_LOADSTRUC;
+        if(fi1) fclose(fi1); 
+        SetCursor(LoadCursor(NULL,IDC_ARROW)); 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return(0);
+
+/*======================================================================
+* COMMAND : Hilfe
+*=====================================================================*/
+      case ITC_HELP:
+        fcfg= fopen(cfg,"r");          /* Z88COM.CFG oeffnen */
+        if(fcfg == NULL)
+          {
+          if(LANG == 1) strcpy(cmess,
+          "Datei Z88COM.CFG nicht vorhanden oder zerschossen !");
+          if(LANG == 2) strcpy(cmess,
+          "File Z88COM.CFG not available or destroyed !");
+          MessageBox(hWnd,cmess,"Z88O", MB_OK | MB_ICONHAND);
+          }
+
+        rewind(fcfg);
+
+        fgets(cstore,128,fcfg);
+        fgets(cstore,128,fcfg);
+
+        fgets(cstore,128,fcfg);
+        laenge= strlen(cstore);
+        strncpy(cbpref,cstore,laenge-1);
+        strcat (cbpref,"\0");
+
+        fgets(cstore,128,fcfg);
+        laenge= strlen(cstore);
+        strncpy(cbcall,cstore,laenge-1);
+        strcat (cbcall,"\0");
+
+        fclose(fcfg); 
+
+        strcpy(cbhelp,cbcall);
+        strcat(cbhelp," ");
+        strcat(cbhelp,cbpref);
+        if(LANG == 1) strcat(cbhelp,"g88o.htm");
+        if(LANG == 2) strcat(cbhelp,"e88o.htm");
+        imess= WinExec(cbhelp,SW_SHOW);
+        if(imess < 33)
+          {
+          if(LANG == 1) strcpy(cmess,
+          "Internet Browser konnte nicht gestartet werden !");
+          if(LANG == 2) strcpy(cmess,
+          "Could not launch Internet Browser !");
+          MessageBox(hWnd,cmess,"Z88P", MB_OK | MB_ICONHAND);
+          }
+
+      return 0;
+
+/*======================================================================
+* Keyboard oder Maus fuer Zoom-Schieben-Rotieren
+*=====================================================================*/ 
+      case ITC_MAUS:
+        if(ifkom == ID_FUNKEY ) ifkom= ID_MOUSE;
+        else                    ifkom= ID_FUNKEY;
+      return 0;
+
+/*======================================================================
+* Unverformt oder verformt
+*=====================================================================*/ 
+      case IDM_UNVERFORMT:
+      case IDM_VERFORMT:
+        hMenu= GetMenu(hWnd);
+        CheckMenuItem(hMenu,ifverf,MF_UNCHECKED | MF_BYCOMMAND);
+        ifverf= LOWORD(wParam);
+        CheckMenuItem(hMenu,ifverf,MF_CHECKED | MF_BYCOMMAND);   
+
+        if     (ifverf == IDM_UNVERFORMT) 
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_UNVERFORMT,(LPARAM) MAKELONG(TRUE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_VERFORMT,(LPARAM) MAKELONG(FALSE,0) );
+          }
+
+        else if(ifverf == IDM_VERFORMT)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_UNVERFORMT,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_VERFORMT,(LPARAM) MAKELONG(TRUE,0) );
+          }
+
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_UNVERFORMT:
+        ifverf = IDM_UNVERFORMT; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_VERFORMT:
+        ifverf = IDM_VERFORMT; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+/*======================================================================
+* Bild
+*=====================================================================*/ 
+      case IDM_PRIOR:
+        facx *= fzoom;
+        facy *= fzoom;
+        facz *= fzoom;
+        izoom++;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+      
+      case IDM_NEXT:
+        facx /= fzoom;
+        facy /= fzoom;
+        facz /= fzoom;
+        izoom--;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0; 
+
+      case IDM_UP:
+        if(ifvcur == 0) vcur88();
+        cy= cy - 0.05*(fabs(ymax) + fabs(ymin))/pow(fzoom,(double)izoom);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_DOWN:
+        if(ifvcur == 0) vcur88();
+        cy= cy + 0.05*(fabs(ymax) + fabs(ymin))/pow(fzoom,(double)izoom);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_RIGHT:
+        if(ifvcur == 0) vcur88();
+        cx= cx - 0.05*(fabs(xmax) + fabs(xmin))/pow(fzoom,(double)izoom);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_LEFT:
+        if(ifvcur == 0) vcur88();
+        cx= cx + 0.05*(fabs(xmax) + fabs(xmin))/pow(fzoom,(double)izoom);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_HOME:
+        if(ifvcur == 0) vcur88();
+        cz= cz - 0.05*(fabs(zmax) + fabs(zmin))/pow(fzoom,(double)izoom);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_END:
+        if(ifvcur == 0) vcur88();
+        cz= cz + 0.05*(fabs(zmax) + fabs(zmin))/pow(fzoom,(double)izoom);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+ 
+      case IDM_F2:
+        rotx -= 10.;
+        if ((int)rotx == -10) rotx= 350.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_F3:
+        rotx += 10.;
+        if ((int)rotx == 360) rotx= 0.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_F4:
+        roty -= 10.;
+        if ((int)roty == -10) roty= 350.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_F5:
+        roty += 10.;
+        if ((int)roty == 360) roty= 0.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_F6:
+        rotz -= 10.;
+        if ((int)rotz == -10) rotz= 350.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_F7:
+        rotz += 10.;
+        if ((int)rotz == 360) rotz= 0.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_F8:
+        rotx= 0.;
+        roty= 0.;
+        rotz= 0.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+/*======================================================================
+* Faktor- Boxen
+*=====================================================================*/ 
+      case IDM_VER:
+        if(LANG == 1) DialogBox(hInstance,"Dlg_Ver88G",hWnd,
+                                FaktorVerDiaProc);
+        if(LANG == 2) DialogBox(hInstance,"Dlg_Ver88E",hWnd,
+                                FaktorVerDiaProc);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_ROT:
+        if(LANG == 1) DialogBox(hInstance,"Dlg_Rot88G",hWnd,
+                                FaktorRotDiaProc);
+        if(LANG == 2) DialogBox(hInstance,"Dlg_Rot88E",hWnd,
+                                FaktorRotDiaProc);
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case IDM_ZM:
+        if(LANG == 1) DialogBox(hInstance,"Dlg_ZM88G",hWnd,
+                                FaktorZmDiaProc);
+        if(LANG == 2) DialogBox(hInstance,"Dlg_ZM88E",hWnd,
+                                FaktorZmDiaProc);
+        glViewport(0,0,IB,IH);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(xm,xp,ym,yp,zm,zp);
+
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+/*======================================================================
+* Labels via Menue
+*=====================================================================*/ 
+      case IDM_NOLABELS:
+      case IDM_KNOTEN:
+      case IDM_ELEMENTE:
+        hMenu= GetMenu(hWnd);
+        CheckMenuItem(hMenu,iflabe,MF_UNCHECKED | MF_BYCOMMAND);
+        iflabe= LOWORD(wParam);
+        CheckMenuItem(hMenu,iflabe,MF_CHECKED | MF_BYCOMMAND);   
+        if(iflabe == IDM_KNOTEN)
+          {
+          if(LANG == 1) 
+            DialogBox(hInstance,"Dlg_Kno88G",hWnd,KnotenDiaProc);
+          if(LANG == 2)
+            DialogBox(hInstance,"Dlg_Kno88E",hWnd,KnotenDiaProc);
+          }
+        if(iflabe == IDM_ELEMENTE)
+          {
+          if(LANG == 1)
+            DialogBox(hInstance,"Dlg_Ele88G",hWnd,ElementDiaProc);
+          if(LANG == 2) 
+            DialogBox(hInstance,"Dlg_Ele88E",hWnd,ElementDiaProc);
+          }
+
+        if(iplot == 1)
+          InvalidateRect(hWnd,NULL,TRUE);
+        else
+          {
+          CheckMenuItem(hMenu,iflabe,MF_UNCHECKED | MF_BYCOMMAND);
+          iflabe= IDM_NOLABELS;
+          CheckMenuItem(hMenu,iflabe,MF_CHECKED | MF_BYCOMMAND);  
+          }
+
+      return 0;
+         
+/*======================================================================
+* Licht/Hidden Line/Spannungen/Verschiebungen X,Y,Z
+*=====================================================================*/ 
+      case IDM_LIGHT:
+      case IDM_HIDDEN:
+      case IDM_SHOWSPANN:
+      case IDM_SHOWGAUSS:
+      case IDM_SHOWVX:
+      case IDM_SHOWVY:
+      case IDM_SHOWVZ:
+        hMenu= GetMenu(hWnd);
+        CheckMenuItem(hMenu,if3d,MF_UNCHECKED | MF_BYCOMMAND);
+        if3d= LOWORD(wParam);
+        CheckMenuItem(hMenu,if3d,MF_CHECKED | MF_BYCOMMAND);   
+
+        if     (if3d == IDM_LIGHT) 
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_LIGHT,(LPARAM) MAKELONG(TRUE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HIDDEN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWSPANN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWGAUSS,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVX,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVY,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVZ,(LPARAM) MAKELONG(FALSE,0) );
+          }
+
+        else if(if3d == IDM_HIDDEN)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_LIGHT,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HIDDEN,(LPARAM) MAKELONG(TRUE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWSPANN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWGAUSS,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVX,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVY,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVZ,(LPARAM) MAKELONG(FALSE,0) );
+          }
+
+        else if(if3d == IDM_SHOWSPANN)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_LIGHT,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HIDDEN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWSPANN,(LPARAM) MAKELONG(TRUE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWGAUSS,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVX,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVY,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVZ,(LPARAM) MAKELONG(FALSE,0) );
+          }
+
+        else if(if3d == IDM_SHOWGAUSS)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_LIGHT,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HIDDEN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWSPANN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWGAUSS,(LPARAM) MAKELONG(TRUE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVX,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVY,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVZ,(LPARAM) MAKELONG(FALSE,0) );
+          }
+
+        else if(if3d == IDM_SHOWVX)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_LIGHT,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HIDDEN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWSPANN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWGAUSS,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVX,(LPARAM) MAKELONG(TRUE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVY,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVZ,(LPARAM) MAKELONG(FALSE,0) );
+          }
+
+        else if(if3d == IDM_SHOWVY)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_LIGHT,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HIDDEN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWSPANN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWGAUSS,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVX,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVY,(LPARAM) MAKELONG(TRUE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVZ,(LPARAM) MAKELONG(FALSE,0) );
+          }
+
+        else if(if3d == IDM_SHOWVZ)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_LIGHT,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HIDDEN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWSPANN,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWGAUSS,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVX,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVY,(LPARAM) MAKELONG(FALSE,0) );
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_SHOWVZ,(LPARAM) MAKELONG(TRUE,0) );
+          }
+
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_LIGHT:
+        if3d = IDM_LIGHT; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_HIDDEN:
+        if3d = IDM_HIDDEN; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_SHOWSPANN:
+        if3d = IDM_SHOWSPANN; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_SHOWGAUSS:
+        if3d = IDM_SHOWGAUSS; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_SHOWVX:
+        if3d = IDM_SHOWVX; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_SHOWVY:
+        if3d = IDM_SHOWVY; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_SHOWVZ:
+        if3d = IDM_SHOWVZ; 
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+/*======================================================================
+*     Autoscale setzen
+*=====================================================================*/ 
+      case IDM_YESSCALE:
+        izoom= 1;
+        rotx= 0.;
+        roty= 0.;
+        rotz= 0.;
+        s   = 1.;
+        rx  = 0.;
+        ry  = 0.;
+        rz  = 0.;
+        tx  = 0.;
+        ty  = 0.;
+      case IDM_NOSCALE:
+        hMenu= GetMenu(hWnd);
+        CheckMenuItem(hMenu,ifscale,MF_UNCHECKED | MF_BYCOMMAND);
+        ifscale= LOWORD(wParam);
+        CheckMenuItem(hMenu,ifscale,MF_CHECKED | MF_BYCOMMAND);   
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+      case ITC_YESSCALE:
+        ifscale = IDM_YESSCALE;
+        izoom= 1;
+        rotx= 0.;
+        roty= 0.;
+        rotz= 0.;
+        s   = 1.;
+        rx  = 0.;
+        ry  = 0.;
+        rz  = 0.;
+        tx  = 0.;
+        ty  = 0.;
+        InvalidateRect(hWnd,NULL,TRUE);
+      return 0;
+
+/*======================================================================
+* Default
+*=====================================================================*/ 
+      default:
+        return DefWindowProc(hWnd, Message, wParam, lParam); /* end switch */
+      }
+
+/*----------------------------------------------------------------------
+* WM_SIZE: Wenn das Window veraendert wird,dann
+*---------------------------------------------------------------------*/
+  case WM_SIZE:
+    iyClient= HIWORD(lParam);
+    ixClient= LOWORD(lParam);
+
+    IB= ixClient;
+    IH= iyClient-48;
+
+    glViewport(0,0,IB,IH);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(xm,xp,ym,yp,zm,zp);
+
+    glMatrixMode(GL_MODELVIEW);
+  return 0;
+
+/*----------------------------------------------------------------------
+* WM_MOUSEMOVE: Wenn Maus bewegt und linke Taste,dann
+*---------------------------------------------------------------------*/
+  case WM_MOUSEMOVE:
+    if(wParam & MK_LBUTTON)
+      {
+      iy= HIWORD(lParam);
+      ix= LOWORD(lParam);
+      xx= (FR_DOUBLE)ix;
+      yy= (FR_DOUBLE)iy;
+      ifmaus= IDM_ZOOM;
+      InvalidateRect(hWnd,NULL,TRUE);
+      }
+    if(wParam & MK_MBUTTON)
+      {
+      iy= HIWORD(lParam);
+      ix= LOWORD(lParam);
+      xx= (FR_DOUBLE)ix;
+      yy= (FR_DOUBLE)iy;
+      ifmaus= IDM_PAN;
+      InvalidateRect(hWnd,NULL,TRUE);
+      }
+    if(wParam & MK_RBUTTON)
+      {
+      iy= HIWORD(lParam);
+      ix= LOWORD(lParam);
+      xx= (FR_DOUBLE)ix;
+      yy= (FR_DOUBLE)iy;
+      ifmaus= IDM_ROTATE;
+      InvalidateRect(hWnd,NULL,TRUE);
+      }
+  return 0;
+
+/*----------------------------------------------------------------------
+* WM_PAINT:
+*---------------------------------------------------------------------*/
+  case WM_PAINT:
+
+/*======================================================================
+* Polygon-Modus FILL und Hidden- Surface Removal an
+*=====================================================================*/
+    glEnable(GL_DEPTH_TEST);
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
+/*======================================================================
+* Hintergrundfarbe
+*=====================================================================*/
+    glClearColor(back_col[0],back_col[1],back_col[2],back_col[3]);
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+/*======================================================================
+* Lichtquelle immer am selben Ort lassen
+*=====================================================================*/
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+/*======================================================================
+* Z88O1.TXT schon geladen?
+*=====================================================================*/
+    if(iflade == ID_NOTLOADSTRUC) goto Lflush;
+
+/*======================================================================
+* Maximalwerte ermitteln und Skalieren 
+*=====================================================================*/
+    if( ifscale == IDM_YESSCALE) vsca88();
+
+/*======================================================================
+* Laden von Z88O2.TXT
+*=====================================================================*/ 
+    if(iflaver == ID_NOTLOADVERF && 
+       (ifverf == IDM_VERFORMT   ||   if3d   == IDM_SHOWVX     ||
+        if3d   == IDM_SHOWVY     ||   if3d   == IDM_SHOWVZ))
+      {
+      SetCursor(waitcur);
+      ShowCursor(TRUE);
+
+      fo2= fopen("z88o2.txt","r");
+      if(fo2 == NULL)
+        {
+        ale88o(AL_NOO2);
+        wlog88o(0,LOG_NOO2);
+        fclose(fwlo);
+        return(AL_NOO8);
+        }
+      rewind(fo2);
+
+      ro2x88(); 
+      iflaver= ID_LOADVERF;
+      if(fo2) fclose(fo2); 
+      }
+
+/*======================================================================
+* Laden von Z88O8.TXT
+*=====================================================================*/ 
+    if(iflspa == ID_NOTLOADSPANN && 
+        (if3d == IDM_SHOWSPANN ||
+         if3d == IDM_SHOWGAUSS))
+      {
+      fo8= fopen("z88o8.txt","r");
+      if(fo8 == NULL)
+        {
+        ale88o(AL_NOO8);    
+        wlog88o(0,LOG_NOO8);
+        fclose(fwlo);
+        return(AL_NOO8);
+        }
+      rewind(fo8);
+
+      ro8x88(); 
+      iflspa= ID_LOADSPANN;
+      if(fo8) fclose(fo8); 
+      }
+
+/*======================================================================
+* Berechnen der Spannungs- und Verschiebungsfarbwerte
+*=====================================================================*/ 
+    if(if3d == IDM_SHOWSPANN) stro88();
+    if(if3d == IDM_SHOWGAUSS) snow88();
+    if(if3d == IDM_SHOWVX)    fvx88();
+    if(if3d == IDM_SHOWVY)    fvy88();  
+    if(if3d == IDM_SHOWVZ)    fvz88();   
+
+/*======================================================================
+* Spannungsskala bzw. Verschiebungsskala zeichnen
+*=====================================================================*/
+    if(if3d == IDM_SHOWSPANN || if3d == IDM_SHOWGAUSS || 
+       if3d == IDM_SHOWVX    ||
+       if3d == IDM_SHOWVY    || if3d == IDM_SHOWVZ)
+      {
+      glDisable(GL_NORMALIZE);
+      glDisable(GL_LIGHTING);
+      glShadeModel(GL_FLAT);
+      
+      fsca88();
+      }
+
+/*========================================================
+* Licht ?
+*=======================================================*/
+    if(if3d == IDM_LIGHT)
+      {
+      glEnable(GL_NORMALIZE);
+      glEnable(GL_LIGHTING);
+
+      glLightfv(GL_LIGHT0,GL_SPECULAR,specula0);
+      glLightfv(GL_LIGHT0,GL_DIFFUSE ,diffuse0 );
+      glLightfv(GL_LIGHT0,GL_POSITION,positio0);
+      glLightfv(GL_LIGHT0,GL_AMBIENT ,ambient0 );
+      glEnable(GL_LIGHT0);
+
+      glLightfv(GL_LIGHT1,GL_SPECULAR,specula1);
+      glLightfv(GL_LIGHT1,GL_DIFFUSE ,diffuse1);
+      glLightfv(GL_LIGHT1,GL_POSITION,positio1);
+      glLightfv(GL_LIGHT1,GL_AMBIENT ,ambient1);
+      glEnable(GL_LIGHT1);
+
+      glLightfv(GL_LIGHT2,GL_SPECULAR,specula2);
+      glLightfv(GL_LIGHT2,GL_POSITION,positio2);
+      glEnable(GL_LIGHT2);
+
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,diff_mat);
+      glMaterialfv(GL_FRONT,GL_SPECULAR,spec_mat);
+      glMaterialfv(GL_FRONT,GL_SHININESS,shine);
+      }
+
+/*========================================================
+* Die Transformationen ausfuehren
+*=======================================================*/
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    
+    if(ifmaus == IDM_ZOOM)  /* Zoom */
+      {
+      s=8./3.*xx*xx/IB/IB+1./3.;
+      if(s < 0.) s= 0.;
+      }
+
+    if(ifmaus == IDM_PAN)  /* Panning */
+      {
+      xw= (FR_DOUBLE)IB;
+      ty= -yp*2/(xw/2) *(yy-xw/2);
+      tx= -yp*2/(xw/2) *(xw/2-xx);
+      }
+
+    if(ifmaus == IDM_ROTATE)  /* Rotieren */
+      {
+      rx= yy;
+      ry= xx;
+      }
+
+    if(ifkom == ID_MOUSE)
+      {
+      glScaled(s,s,s);
+      glTranslated(tx,ty,0);
+      glRotated(rx,0.,1.,0.);
+      glRotated(ry,1.,0.,0.);
+      }
+
+    if(ifkom == ID_FUNKEY);
+      {
+      glRotated(rotx,1.,0.,0.);
+      glRotated(roty,0.,1.,0.);
+      glRotated(rotz,0.,0.,1.);
+      }
+
+/*========================================================
+* Koordinaten umrechnen
+*=======================================================*/
+    if(ifverf == IDM_UNVERFORMT) vu3b88();
+    else                         vv3b88();
+
+/*========================================================
+* Schleife ueber alle Elemente, mit Licht
+*=======================================================*/
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* 1) mit Licht
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    if(if3d == IDM_LIGHT) tet188();
+      
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* 2) Spannungen an Eckknoten, Verschiebungen an Eckknoten
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    if(if3d == IDM_SHOWSPANN || if3d == IDM_SHOWVX    ||
+       if3d == IDM_SHOWVY    || if3d == IDM_SHOWVZ)
+      {
+      glDisable(GL_NORMALIZE);
+      glDisable(GL_LIGHTING);
+      glShadeModel(GL_SMOOTH);
+      tet288();
+      }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* 3) Hidden Line bzw. nur Netz
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    if(if3d == IDM_HIDDEN && ndim == 3 && iflabe == IDM_NOLABELS) 
+      {
+      glDisable(GL_NORMALIZE);
+      glDisable(GL_LIGHTING);
+      glEnable(GL_DEPTH_TEST);
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+      glColor3f(hide_col[0],hide_col[1],hide_col[2]);
+      tet388();
+      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+      glEnable(GL_POLYGON_OFFSET_FILL);
+      glPolygonOffset(hide_off[0],hide_off[1]);
+      glColor3f(back_col[0],back_col[1],back_col[2]);
+      tet388();
+      glDisable(GL_POLYGON_OFFSET_FILL); 
+      }
+
+    if(if3d == IDM_HIDDEN && ndim == 3 && iflabe != IDM_NOLABELS ) 
+      {
+      glDisable(GL_NORMALIZE);
+      glDisable(GL_LIGHTING);
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+      glColor3f(hide_col[0],hide_col[1],hide_col[2]);
+      tet588();
+      }
+
+    if(if3d == IDM_HIDDEN && ndim == 2 ) 
+      {
+      glDisable(GL_NORMALIZE);
+      glDisable(GL_LIGHTING);
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+      glColor3f(hide_col[0],hide_col[1],hide_col[2]);
+      tet588();
+      }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* 4) Spannungen pro Element gemittelt
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    if(if3d == IDM_SHOWGAUSS)
+      {
+      glDisable(GL_NORMALIZE);
+      glDisable(GL_LIGHTING);
+      glShadeModel(GL_FLAT);
+      tet488();
+      }
+
+/*========================================================
+* Knotennummern plotten ?
+*=======================================================*/
+    if(iflabe == IDM_KNOTEN)  malk88();
+
+/*========================================================
+* fertig OpenGL
+*=======================================================*/
+Lflush:
+    glFlush();
+    SwapBuffers(hDC);
+    ValidateRect(hWnd,NULL);
+  return 0;
+
+/*=========================================================
+* Wenn keine der obigen Cases zutrifft, dann
+*========================================================*/
+  default:
+    return DefWindowProc(hWnd,Message,wParam,lParam);
+  }
+}
+

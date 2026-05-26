@@ -1,0 +1,356 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* koi88x.c : Koinzidenz je nach Typ erkennen
+* 11.9.2002 Rieg
+***********************************************************************/
+
+/***********************************************************************
+* Fuer UNIX
+***********************************************************************/
+#ifdef FR_UNIX
+#include <stdio.h>
+#include <string.h>
+#include <z88x.h>
+#endif
+
+/***********************************************************************
+* Fuer Windows95
+***********************************************************************/
+#ifdef FR_WIN95
+#include <stdio.h>
+#include <string.h>
+#include <z88x.h>
+#endif
+
+/***********************************************************************
+*  Functions
+***********************************************************************/
+
+/***********************************************************************
+* hier beginnt Function koi88x
+***********************************************************************/
+int koi88x(FR_INT4 i)
+{
+extern FILE *fdxf,*fwlo;
+
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+
+extern FR_INT4AY koi;
+extern FR_INT4AY koffs;
+extern FR_INT4AY ityp;
+
+extern FR_INT4 ianz,nkp;
+
+FR_DOUBLE xk[21],yk[21],zk[21];
+FR_DOUBLE xmin,xmax,ymin,ymax,zmin,zmax,eps;
+
+FR_INT4 j,k,index;
+
+char cline[256];
+
+/***********************************************************************
+* start function
+***********************************************************************/
+eps= 0.0001;
+
+/*---------------------------------------------------------------------*
+* Typen 3,6,7,8,11,12,14,15,18,19,20
+*---------------------------------------------------------------------*/
+if(ityp[i] ==  3 || ityp[i] ==  6 ||
+   ityp[i] ==  7 || ityp[i] ==  8 ||
+   ityp[i] == 11 || ityp[i] == 12 ||
+   ityp[i] == 14 || ityp[i] == 15 ||
+   ityp[i] == 18 || ityp[i] == 19 || ityp[i] == 20)
+  {
+  for(j= 1; j <= ianz; j++)
+    {
+    do
+      {
+      fgets(cline,256,fdxf);
+      if((strstr(cline,"EOF")) != NULL) return(AL_TOOFEW);
+      }
+    while ((strstr(cline," 10"))== NULL);        /* Aufsetzpunkt "10" */
+
+    fgets(cline,256,fdxf);                       /* xk erfassen    */
+    sscanf(cline,"%lg",&xk[j]);                  /* xk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "20" leerlesen */
+    fgets(cline,256,fdxf);                       /* yk erfassen    */
+    sscanf(cline,"%lg",&yk[j]);                  /* yk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "30" leerlesen */
+    fgets(cline,256,fdxf);                       /* zk erfassen    */
+    sscanf(cline,"%lg",&zk[j]);                  /* zk lesen       */
+
+    for(index= 1; index <= nkp; index++)
+      {
+      xmax= x[index] + eps; xmin= x[index] - eps; 
+      ymax= y[index] + eps; ymin= y[index] - eps; 
+      zmax= z[index] + eps; zmin= z[index] - eps;
+      if(xk[j] >= xmin && xk[j] <= xmax &&
+         yk[j] >= ymin && yk[j] <= ymax &&
+         zk[j] >= zmin && zk[j] <= zmax)
+        {
+        fprintf(fwlo,"\nELE%ld #%ld J=%ld XK=%lg YK=%lg ZK=%lg",
+        i,index,j,xk[j],yk[j],zk[j]);
+        fflush(fwlo);
+        koi[koffs[i]+j-1]= index;
+        goto L100;
+        }
+      }
+      L100:;
+    }  
+  }
+
+/*---------------------------------------------------------------------*
+* Typen 2,4,5,9,13
+*---------------------------------------------------------------------*/
+else if(ityp[i] ==  2 || ityp[i] ==  4 ||
+        ityp[i] ==  5 || ityp[i] ==  9 || ityp[i] == 13)
+  {
+  do
+    {
+    fgets(cline,256,fdxf);
+    if((strstr(cline,"EOF")) != NULL) return(AL_TOOFEW);
+    }
+  while ((strstr(cline," 10"))== NULL);          /* Aufsetzpunkt "10" */
+
+  fgets(cline,256,fdxf);                         /* xk1 erfassen   */
+  sscanf(cline,"%lg",&xk[1]);                    /* xk1 lesen      */
+
+  fgets(cline,256,fdxf);                         /* "20" leerlesen */
+  fgets(cline,256,fdxf);                         /* yk1 erfassen   */
+  sscanf(cline,"%lg",&yk[1]);                    /* yk1 lesen      */
+
+  fgets(cline,256,fdxf);                         /* "30" leerlesen */
+  fgets(cline,256,fdxf);                         /* zk1 erfassen   */
+  sscanf(cline,"%lg",&zk[1]);                    /* zk1 lesen      */
+
+  fgets(cline,256,fdxf);                         /* "11" leerlesen */
+  fgets(cline,256,fdxf);                         /* xk2 erfassen   */
+  sscanf(cline,"%lg",&xk[2]);                    /* xk2 lesen      */
+
+  fgets(cline,256,fdxf);                         /* "21" leerlesen */
+  fgets(cline,256,fdxf);                         /* yk2 erfassen   */
+  sscanf(cline,"%lg",&yk[2]);                    /* yk2 lesen      */
+
+  fgets(cline,256,fdxf);                         /* "31" leerlesen */
+  fgets(cline,256,fdxf);                         /* zk2 erfassen   */
+  sscanf(cline,"%lg",&zk[2]);                    /* zk2 lesen      */
+
+  for(j= 1; j <= ianz; j++)
+    {
+    for(index= 1; index <= nkp; index++)
+      {
+      xmax= x[index] + eps; xmin= x[index] - eps; 
+      ymax= y[index] + eps; ymin= y[index] - eps; 
+      zmax= z[index] + eps; zmin= z[index] - eps;
+      if(xk[j] >= xmin && xk[j] <= xmax &&
+         yk[j] >= ymin && yk[j] <= ymax &&
+         zk[j] >= zmin && zk[j] <= zmax)
+        {
+        fprintf(fwlo,"\nELE%ld #%ld J=%ld XK=%lg YK=%lg ZK=%lg",
+        i,index,j,xk[j],yk[j],zk[j]);
+        fflush(fwlo);
+        koi[koffs[i]+j-1]= index;
+        goto L200;
+        }
+      }
+      L200:;
+    }  
+  }
+
+/*---------------------------------------------------------------------*
+* Hexaeder Nr. 1
+*---------------------------------------------------------------------*/
+else if(ityp[i] == 1)
+  {
+  for(j= 1; j <= ianz; j++)
+    {
+    do
+      {
+      fgets(cline,256,fdxf);
+      if((strstr(cline,"EOF")) != NULL) return(AL_TOOFEW);
+      }
+    while ((strstr(cline," 10"))== NULL);        /* Aufsetzpunkt "10" */
+
+    fgets(cline,256,fdxf);                       /* xk erfassen    */
+    sscanf(cline,"%lg",&xk[j]);                  /* xk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "20" leerlesen */
+    fgets(cline,256,fdxf);                       /* yk erfassen    */
+    sscanf(cline,"%lg",&yk[j]);                  /* yk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "30" leerlesen */
+    fgets(cline,256,fdxf);                       /* zk erfassen    */
+    sscanf(cline,"%lg",&zk[j]);                  /* zk lesen       */
+
+    for(index= 1; index <= nkp; index++)
+      {
+      xmax= x[index] + eps; xmin= x[index] - eps; 
+      ymax= y[index] + eps; ymin= y[index] - eps; 
+      zmax= z[index] + eps; zmin= z[index] - eps;
+      if(xk[j] >= xmin && xk[j] <= xmax &&
+         yk[j] >= ymin && yk[j] <= ymax &&
+         zk[j] >= zmin && zk[j] <= zmax)
+        {
+        fprintf(fwlo,"\nELE%ld #%ld J=%ld XK=%lg YK=%lg ZK=%lg",
+        i,index,j,xk[j],yk[j],zk[j]);
+        fflush(fwlo);
+        koi[koffs[i]+j-1]= index;
+        goto L300;
+        }
+      }
+      L300:;
+    }
+/*---------- die vier Seitenlinien ueberspringen ---------------------*/
+  for(k= 1; k <= 4; k++)                        
+    {
+    do
+      {
+      fgets(cline,256,fdxf);
+      if((strstr(cline,"EOF")) != NULL) return(AL_TOOFEW);
+      }
+    while ((strstr(cline," 10"))== NULL);        /* Aufsetzpunkt "10" */
+    }
+  }
+
+/*---------------------------------------------------------------------*
+* Hexaeder Nr. 10
+*---------------------------------------------------------------------*/
+else if(ityp[i] == 10)
+  {
+/*=====================================================================*
+* die beiden Deckflaechen
+*=====================================================================*/
+  for(j= 1; j <= 16; j++)
+    {
+    do
+      {
+      fgets(cline,256,fdxf);
+      if((strstr(cline,"EOF")) != NULL) return(AL_TOOFEW);
+      }
+    while ((strstr(cline," 10"))== NULL);        /* Aufsetzpunkt "10" */
+
+    fgets(cline,256,fdxf);                       /* xk erfassen    */
+    sscanf(cline,"%lg",&xk[j]);                  /* xk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "20" leerlesen */
+    fgets(cline,256,fdxf);                       /* yk erfassen    */
+    sscanf(cline,"%lg",&yk[j]);                  /* yk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "30" leerlesen */
+    fgets(cline,256,fdxf);                       /* zk erfassen    */
+    sscanf(cline,"%lg",&zk[j]);                  /* zk lesen       */
+
+    for(index= 1; index <= nkp; index++)
+      {
+      xmax= x[index] + eps; xmin= x[index] - eps; 
+      ymax= y[index] + eps; ymin= y[index] - eps; 
+      zmax= z[index] + eps; zmin= z[index] - eps;
+      if(xk[j] >= xmin && xk[j] <= xmax &&
+         yk[j] >= ymin && yk[j] <= ymax &&
+         zk[j] >= zmin && zk[j] <= zmax)
+        {
+        fprintf(fwlo,"\nELE%ld #%ld J=%ld XK=%lg YK=%lg ZK=%lg",
+        i,index,j,xk[j],yk[j],zk[j]);
+        fflush(fwlo);
+        koi[koffs[i]+j-1]= index;
+        goto L400;
+        }
+      }
+      L400:;
+    }
+
+/*=====================================================================*
+* die vier Seitenlinien
+*=====================================================================*/
+  for(j= 17; j <= 20; j++)
+    {
+/*---------- die ersten Teil- Seitenlinien ueberspringen -------------*/
+/*----------------- also von 1-17, 2-18, 3-19, 4-20  -----------------*/
+    do
+      {
+      fgets(cline,256,fdxf);
+      if((strstr(cline,"EOF")) != NULL) return(AL_TOOFEW);
+      }
+    while ((strstr(cline," 10"))== NULL);
+
+/*------------- die zweiten Teil- Seitenlinien scannen ---------------*/
+    do
+      {
+      fgets(cline,256,fdxf);
+      if((strstr(cline,"EOF")) != NULL) return(AL_TOOFEW);
+      }
+    while ((strstr(cline," 10"))== NULL);        /* Aufsetzpunkt "10" */
+ 
+    fgets(cline,256,fdxf);                       /* xk erfassen    */
+    sscanf(cline,"%lg",&xk[j]);                  /* xk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "20" leerlesen */
+    fgets(cline,256,fdxf);                       /* yk erfassen    */
+    sscanf(cline,"%lg",&yk[j]);                  /* yk lesen       */
+
+    fgets(cline,256,fdxf);                       /* "30" leerlesen */
+    fgets(cline,256,fdxf);                       /* zk erfassen    */
+    sscanf(cline,"%lg",&zk[j]);                  /* zk lesen       */
+
+    for(index= 1; index <= nkp; index++)
+      {
+      xmax= x[index] + eps; xmin= x[index] - eps; 
+      ymax= y[index] + eps; ymin= y[index] - eps; 
+      zmax= z[index] + eps; zmin= z[index] - eps;
+      if(xk[j] >= xmin && xk[j] <= xmax &&
+         yk[j] >= ymin && yk[j] <= ymax &&
+         zk[j] >= zmin && zk[j] <= zmax)
+        {
+        fprintf(fwlo,"\nELE%ld #%ld J=%ld XK=%lg YK=%lg ZK=%lg",
+        i,index,j,xk[j],yk[j],zk[j]);
+        fflush(fwlo);
+        koi[koffs[i]+j-1]= index;
+        goto L500;
+        }
+      }
+      L500:;
+    }
+
+  }
+
+return 0; 
+}

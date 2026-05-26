@@ -1,0 +1,566 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* ri188i - Einlesen von Z88I1.TXT fuer Z88I1
+* 29.9.2005 Rieg
+***********************************************************************/
+
+/***********************************************************************
+* Fuer UNIX
+***********************************************************************/
+#ifdef FR_UNIX
+#include <z88i.h>
+#include <stdio.h>    /* fopen,fclose,fprintf,fgets,sscanf */
+#endif
+
+/***********************************************************************
+* Fuer Windows 95
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88i.h>
+#include <stdio.h>    /* fopen,fclose,fprintf,fgets,sscanf */
+#endif
+
+/***********************************************************************
+*  Functions
+***********************************************************************/
+int wrim88i(FR_INT4,int);
+int wlog88i1(FR_INT4,int);
+
+/***********************************************************************
+* hier beginnt Function ri188i
+* ri188i.c liest z88i1.txt ein
+* hier wird File z88i1.txt geoeffnet 
+***********************************************************************/
+int ri188i(void)
+{
+extern FILE *fi1,*fl1;
+extern char ci1[];
+
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+extern FR_DOUBLEAY emod;
+extern FR_DOUBLEAY rnue;
+extern FR_DOUBLEAY qpara;
+extern FR_DOUBLEAY riyy;
+extern FR_DOUBLEAY eyy;
+extern FR_DOUBLEAY rizz;
+extern FR_DOUBLEAY ezz;
+extern FR_DOUBLEAY rit;
+extern FR_DOUBLEAY wt;
+
+extern FR_INT4AY koi;
+extern FR_INT4AY ifrei; 
+extern FR_INT4AY koffs;
+extern FR_INT4AY ityp;
+extern FR_INT4AY ivon;
+extern FR_INT4AY ibis;
+extern FR_INT4AY intord;
+
+extern FR_INT4 ndim,nkp,ne,nfg,neg,kflag,ibflag,ipflag,iqflag;
+extern FR_INT4 MAXNFG,MAXK,MAXE,MAXNEG,MAXKOI;
+
+FR_DOUBLE radius,phi;
+FR_INT4 i,idummy,kofold= 0;
+
+char cline[256];
+
+/*----------------------------------------------------------------------
+* Start Function
+*---------------------------------------------------------------------*/
+wrim88i(0,TX_REAI1);
+
+/*----------------------------------------------------------------------
+* Oeffnen Z88I1.TXT
+*---------------------------------------------------------------------*/
+wlog88i1(0,LOG_BRI188);
+fi1= fopen(ci1,"r");
+if(fi1 == NULL)
+  {
+  wlog88i1(0,LOG_NOI1);
+  fclose(fl1);
+  return(AL_NOI1);
+  }
+
+rewind(fi1);
+
+/*----------------------------------------------------------------------
+* Einlesen der allgemeinen Strukturdaten
+*---------------------------------------------------------------------*/
+fgets(cline,256,fi1);
+sscanf(cline,"%ld %ld %ld %ld %ld %ld %ld %ld %ld",
+&ndim,&nkp,&ne,&nfg,&neg,&kflag,&ibflag,&ipflag,&iqflag);
+
+/*----------------------------------------------------------------------
+* Testen, ob innerhalb der zulaessigen Grenzen
+*---------------------------------------------------------------------*/
+if(!(ndim == 2 || ndim == 3))
+  {
+  wlog88i1(ndim,LOG_WRONGDIM);
+  fclose(fl1);
+  return(AL_WRONDIM);
+  }
+
+if(nkp > MAXK)
+  {
+  wlog88i1(MAXK,LOG_EXMAXK);
+  fclose(fl1);
+  return(AL_EXMAXK);
+  }
+
+if(ne > MAXE)
+  {
+  wlog88i1(MAXE,LOG_EXMAXE);
+  fclose(fl1);
+  return(AL_EXMAXE);
+  }
+
+if(nfg > MAXNFG)
+  {
+  wlog88i1(MAXNFG,LOG_EXMAXNFG);
+  fclose(fl1);
+  return(AL_EXMAXNFG);
+  }
+
+if(neg > MAXNEG)
+  {
+  wlog88i1(MAXNEG,LOG_EXMAXNEG);
+  fclose(fl1);
+  return(AL_EXMAXNEG);
+  }
+
+if(!(kflag == 0 || kflag == 1))
+  {
+  wlog88i1(kflag,LOG_WROKFLAG);
+  fclose(fl1);
+  return(AL_WROKFLAG);
+  }
+
+/***********************************************************************
+* Einlesen der Koordinaten
+***********************************************************************/
+wrim88i(0,TX_KOOR);
+wlog88i1(0,LOG_KOOR);
+
+if(ndim== 3)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    fgets(cline,256,fi1);
+
+#ifdef FR_XQUAD
+    sscanf(cline,"%ld %ld %Lg %Lg %Lg",
+    &idummy,&ifrei[i],&x[i],&y[i],&z[i]);
+#endif
+
+#ifdef FR_XDOUB
+    sscanf(cline,"%ld %ld %lg %lg %lg",
+    &idummy,&ifrei[i],&x[i],&y[i],&z[i]);
+#endif
+    }
+  }
+else
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    fgets(cline,256,fi1);
+
+#ifdef FR_XQUAD
+    sscanf(cline,"%ld %ld %Lg %Lg",
+    &idummy,&ifrei[i],&x[i],&y[i]);
+#endif
+
+#ifdef FR_XDOUB
+    sscanf(cline,"%ld %ld %lg %lg",
+    &idummy,&ifrei[i],&x[i],&y[i]);
+#endif
+    }
+  }
+
+/*----------------------------------------------------------------------
+* ggf auf kartesische koordinaten umrechnen
+*---------------------------------------------------------------------*/
+if(kflag == 1) 
+  {
+  wrim88i(0,TX_POLAR);
+  for(i= 1; i <= nkp; i++)
+    {
+    radius= x[i];
+    phi= 3.141593/180.* y[i];
+    x[i]= radius*FR_COS(phi);
+    y[i]= radius*FR_SIN(phi);
+    }
+  }
+
+/***********************************************************************
+* einlesen der koinzidenz
+***********************************************************************/
+wrim88i(0,TX_KOIN);
+wlog88i1(0,LOG_KOIN);
+
+for(i= 1; i <= ne; i++)
+  {
+  fgets(cline,256,fi1);
+  sscanf(cline,"%ld %ld",&idummy,&ityp[i]); 
+
+/*----------------------------------------------------------------------
+* den koinzidenzvektor koi & den zugehoerigen pointervektor koffs
+* auffuellen
+*---------------------------------------------------------------------*/
+/*======================================================================
+* elementtypen 1, 7, 8 und 20
+*=====================================================================*/
+  if(ityp[i]== 1 || ityp[i]== 7 || ityp[i]== 8 || ityp[i]== 20) 
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+    
+    if(koffs[i]+8 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+    
+ 
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[koffs[i]   ], &koi[koffs[i] +1], 
+    &koi[koffs[i] +2], &koi[koffs[i] +3], 
+    &koi[koffs[i] +4], &koi[koffs[i] +5], 
+    &koi[koffs[i] +6], &koi[koffs[i] +7]); 
+
+    kofold= 8;
+    }
+          
+/*======================================================================
+* elementtypen 2, 4, 5 , 9 & 13
+*=====================================================================*/
+  if(ityp[i]== 2 || ityp[i]== 4 || ityp[i]== 5 ||
+     ityp[i]== 9 || ityp[i]== 13)
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+2 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld",
+    &koi[koffs[i]   ], &koi[koffs[i] +1]); 
+            
+    kofold= 2;
+    }
+                  
+/*======================================================================
+* elementtyp 3, 14,15 & 18
+*=====================================================================*/
+  if(ityp[i]== 3 || ityp[i]== 14 || ityp[i]== 15 || ityp[i]== 18)
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+6 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld %ld %ld %ld",
+    &koi[koffs[i]   ], &koi[koffs[i] +1], 
+    &koi[koffs[i] +2], &koi[koffs[i] +3], 
+    &koi[koffs[i] +4], &koi[koffs[i] +5]); 
+
+    kofold= 6;
+    }
+          
+/*======================================================================
+* elementtyp 6
+*=====================================================================*/
+  if(ityp[i]== 6)
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+3 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld",
+    &koi[koffs[i]   ], &koi[koffs[i] +1], 
+    &koi[koffs[i] +2]);
+            
+    kofold= 3;
+    }
+          
+/*======================================================================
+* elementtyp 10
+*=====================================================================*/
+  if(ityp[i]== 10)
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+20 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\
+ %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[koffs[i]    ], &koi[koffs[i]  +1], 
+    &koi[koffs[i]  +2], &koi[koffs[i]  +3], 
+    &koi[koffs[i]  +4], &koi[koffs[i]  +5], 
+    &koi[koffs[i]  +6], &koi[koffs[i]  +7], 
+    &koi[koffs[i]  +8], &koi[koffs[i]  +9], 
+    &koi[koffs[i] +10], &koi[koffs[i] +11], 
+    &koi[koffs[i] +12], &koi[koffs[i] +13], 
+    &koi[koffs[i] +14], &koi[koffs[i] +15], 
+    &koi[koffs[i] +16], &koi[koffs[i] +17], 
+    &koi[koffs[i] +18], &koi[koffs[i] +19]); 
+
+    kofold= 20;
+    }
+
+/*======================================================================
+* elementtypen 11 & 12
+*=====================================================================*/
+  if(ityp[i]== 11 || ityp[i]== 12) 
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+12 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[koffs[i]    ], &koi[koffs[i] + 1], 
+    &koi[koffs[i] + 2], &koi[koffs[i] + 3], 
+    &koi[koffs[i] + 4], &koi[koffs[i] + 5], 
+    &koi[koffs[i] + 6], &koi[koffs[i] + 7], 
+    &koi[koffs[i] + 8], &koi[koffs[i] + 9], 
+    &koi[koffs[i] +10], &koi[koffs[i] +11]);
+
+    kofold= 12;
+    }
+
+/*======================================================================
+* elementtypen 16
+*=====================================================================*/
+  if(ityp[i]== 16)
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+10 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[koffs[i]   ], &koi[koffs[i] +1], 
+    &koi[koffs[i] +2], &koi[koffs[i] +3], 
+    &koi[koffs[i] +4], &koi[koffs[i] +5], 
+    &koi[koffs[i] +6], &koi[koffs[i] +7], 
+    &koi[koffs[i] +8], &koi[koffs[i] +9]); 
+
+    kofold= 10;
+    }
+
+/*======================================================================
+* elementtyp 17
+*=====================================================================*/
+  if(ityp[i]== 17)
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+4 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld %ld",
+    &koi[koffs[i]   ], &koi[koffs[i] +1], 
+    &koi[koffs[i] +2], &koi[koffs[i] +3]); 
+
+    kofold= 4;
+    }
+
+/*======================================================================
+* elementtyp 19
+*=====================================================================*/
+  if(ityp[i]== 19)
+    {
+    if(i== 1)  koffs[1]= 1;
+    else       koffs[i]= koffs[i-1] + kofold;
+
+    if(koffs[i]+16 > MAXKOI)
+      {
+      wlog88i1(MAXKOI,LOG_EXKOI);
+      fclose(fl1);
+      return(AL_EXKOI);
+      }
+
+    fgets(cline,256,fi1);
+
+    sscanf(cline,"%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\
+ %ld %ld %ld %ld %ld %ld",
+    &koi[koffs[i]    ], &koi[koffs[i]  +1], 
+    &koi[koffs[i]  +2], &koi[koffs[i]  +3], 
+    &koi[koffs[i]  +4], &koi[koffs[i]  +5], 
+    &koi[koffs[i]  +6], &koi[koffs[i]  +7], 
+    &koi[koffs[i]  +8], &koi[koffs[i]  +9], 
+    &koi[koffs[i] +10], &koi[koffs[i] +11], 
+    &koi[koffs[i] +12], &koi[koffs[i] +13], 
+    &koi[koffs[i] +14], &koi[koffs[i] +15]); 
+
+    kofold= 16;
+    }
+
+  }
+
+/*----------------------------------------------------------------------
+* E-Gesetze  einlesen
+*---------------------------------------------------------------------*/
+wrim88i(0,TX_EGES);
+wlog88i1(0,LOG_EGES);
+
+for(i= 1; i <= neg; i++)
+  {
+  if(ibflag == 0 && ipflag == 0)
+    {
+    fgets(cline,256,fi1);
+
+#ifdef FR_XQUAD
+    sscanf(cline,"%ld %ld %Lg %Lg %ld %Lg",
+    &ivon[i],&ibis[i],&emod[i],&rnue[i],&intord[i],&qpara[i]);
+#endif
+
+#ifdef FR_XDOUB
+    sscanf(cline,"%ld %ld %lg %lg %ld %lg",
+    &ivon[i],&ibis[i],&emod[i],&rnue[i],&intord[i],&qpara[i]);
+#endif
+
+    riyy[i]= 0.;
+    eyy[i] = 0.;
+    rizz[i]= 0.;
+    ezz[i] = 0.;
+    rit[i] = 0.;
+    wt[i]  = 0.;
+    }
+
+  if(ipflag != 0)
+    {
+    fgets(cline,256,fi1);
+
+#ifdef FR_XQUAD
+    sscanf(cline,"%ld %ld %Lg %Lg %ld %Lg %Lg",
+    &ivon[i],&ibis[i],&emod[i],&rnue[i],&intord[i],&qpara[i],&riyy[i]);
+#endif
+
+#ifdef FR_XDOUB
+    sscanf(cline,"%ld %ld %lg %lg %ld %lg %lg",
+    &ivon[i],&ibis[i],&emod[i],&rnue[i],&intord[i],&qpara[i],&riyy[i]);
+#endif
+
+    eyy[i] = 0.;
+    rizz[i]= 0.;
+    ezz[i] = 0.;
+    rit[i] = 0.;
+    wt[i]  = 0.;
+    }
+
+  if(ibflag == 1)
+    {
+    fgets(cline,256,fi1);
+
+#ifdef FR_XQUAD
+sscanf(cline,"%ld %ld %Lg %Lg %ld %Lg %Lg %Lg %Lg %Lg %Lg %Lg",
+    &ivon[i],&ibis[i],&emod[i],&rnue[i],&intord[i],&qpara[i],
+    &riyy[i],&eyy[i],&rizz[i],&ezz[i],&rit[i],&wt[i]);
+#endif
+
+#ifdef FR_XDOUB
+sscanf(cline,"%ld %ld %lg %lg %ld %lg %lg %lg %lg %lg %lg %lg",
+    &ivon[i],&ibis[i],&emod[i],&rnue[i],&intord[i],&qpara[i],
+    &riyy[i],&eyy[i],&rizz[i],&ezz[i],&rit[i],&wt[i]);
+#endif
+    }  
+
+  }
+
+/*----------------------------------------------------------------------
+* Z88I1.TXT schliessen 
+*---------------------------------------------------------------------*/
+fclose(fi1);
+
+wlog88i1(0,LOG_EXITRI188);
+return (0);
+}

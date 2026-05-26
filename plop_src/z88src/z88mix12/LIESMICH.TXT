@@ -1,0 +1,59 @@
+                            Z88- Erste Schritte
+                            -------------------
+                               Version 12
+
+   Z88 fuer Windows und UNIX steht unter der GNU General Public License.
+
+   "The licenses for most software are designed to take away your freedom
+   to share and change it.  By contrast, the GNU General Public License
+   is intended to guarantee your freedom to share and change free software-
+   -to make sure the software is free for all its users."
+
+   Den ganzen Text finden Sie in der Datei COPYING.TXT.
+
+   Die Version fuer Windows (95 bis XP) ist vollkommen funktionsidentisch
+   zur UNIX/LINUX-Version von Z88.
+
+1) Kopieren Sie die selbstentpackende Datei Z88RUNG.EXE in ein
+   bestehendes oder neues Directory Ihrer Wahl, z.B. C:\Z88.
+
+2) Starten Sie Z88RUNG.EXE, z.B. mit > Start > Ausfuehren.
+   Falls das nicht funktioniert, entzippen Sie Z88RUNG.ZIP
+
+   Die Z88-Lademodule, die Beispiele, die OnLine-Hilfe Dateien und die
+   Steuerdateien werden  entpackt. Weiter passiert nichts! Es werden vor 
+   allen Dingen keinerlei Veraenderungen in Windows vorgenommen.
+
+   Bei bestimmten Windows- Versionen, wie z.B. Windows XP und 2000, muessen
+   Sie nun noch ggf. die Dateirechte freigeben: Alle Dateien markieren,
+   rechte Maus Taste, > Eigenschaften, dann Haken bei "Read only" bzw.
+   "Nur lesen" entfernen. Oder in einem DOS- Fenster: ATTRIB -R *.*
+
+3) Danach sollten Sie Z88RUNG.EXE aus Ihrem Directory loeschen, damit es 
+   nicht spaeter ungewollt erneut aufgerufen wird.
+
+4) Z88 ist ansich startfertig! Sie koennen sofort durch Aufruf des 
+   Z88- Commanders Z88COM starten. Jedoch ...
+
+   Um einen Link fuer Z88COM anzulegen und um die OnLine- Hilfe verfuegbar
+   zu machen, schauen Sie ins Handbuch Z88MANG.PDF, Kapitel 1.2, oder
+   oeffnen Sie mit einem Internet- Browser die Datei g88mrw.htm.
+
+5) Sie sollten fuer einen ersten Ueberblick das Kapitel 1.1 "Allgemeines 
+   zum FE- Programm Z88" lesen, Z88MANG.PDF.
+
+6) Fuehren Sie sodann das erste Beispiel Kapitel 5.1 "Schraubenschluessel 
+   aus Scheiben Nr.7" aus, Z88MANG.PDF.
+
+   Ich wuensche viel Freude und Erfolg mit Z88!
+
+   Bayreuth, 4.Maerz 2004
+
+   Univ.Prof. Dr.-Ing. Frank Rieg
+   Lehrstuhl fuer Konstruktionslehre und CAD
+   Universitaet Bayreuth
+
+   www.uni-bayreuth.de/departments/konstruktionslehre
+
+   frank.rieg@uni-bayreuth.de
+   dr.frank.rieg@t-online.de

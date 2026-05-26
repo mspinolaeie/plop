@@ -1,0 +1,503 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/**********************************************************************
+* Function g5i188 prueft die 5.Eingabegruppe fuer Z88NI.TXT
+* 9.09.2002 Rieg
+**********************************************************************/
+#ifdef FR_WIN95
+#include <z88v.h>
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#endif
+
+/***********************************************************************
+* Functions
+***********************************************************************/
+void erif88(HWND hWnd,long izeile);
+
+/***********************************************************************
+* Start G5I188
+***********************************************************************/
+int g5i188(HWND hWnd)
+{
+extern FILE *fdatei;
+
+extern FR_INT4 LANG;
+
+extern FR_INT4AY jtyp;
+extern FR_INT4AY jzeile;
+
+extern FR_INT4 ne,niflag,iwarn,izeile;
+
+double epsx,epsy,epsz;
+
+FR_INT4 i,iele,ityp,jtypalt,ix,iy,iz;
+
+int ier;
+
+char *cresult;
+char cline[256], cmess[1024], chead[12];
+char cmodex,cmodey,cmodez;
+
+/**********************************************************************
+* Header vorbelegen
+**********************************************************************/
+strcpy(chead,"Z88NI.TXT");
+
+/**********************************************************************
+* Schleife ueber alle Elemente: alle Elemente gleich ?
+**********************************************************************/
+jtypalt= jtyp[1];
+        
+for(i = 2;i <= ne;i++)
+  {
+  if(jtyp[i] != jtypalt)
+    {
+    if(LANG == 1) sprintf(cmess,
+    "Superelementtyp muss fuer alle Superelemente gleich sein\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen",
+    i-1,jzeile[i-1],i,jzeile[i]);
+
+    if(LANG == 2) sprintf(cmess,
+    "superelement type must be identical for all superelements\n\
+check 2nd entry for superelement %ld in line %ld\n\
+check 2nd entry for superelement %ld in line %ld",
+    i-1,jzeile[i-1],i,jzeile[i]);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+  }
+
+/**********************************************************************
+* Schleife ueber alle Elemente
+**********************************************************************/
+for(i = 1;i <= ne;i++)
+  {                                              /* 20 */
+  izeile++;
+
+/*---------------------------------------------------------------------
+* Schreibfehler 1. Zeile 5.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  cresult= fgets(cline,256,fdatei);
+  if(!cresult)
+    {
+    erif88(hWnd,izeile);
+    return(2);
+    }
+        
+  ier= sscanf(cline,"%ld %ld",&iele,&ityp);
+  if(ier != 2) 
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nSchreibfehler oder fehlende Daten in Zeile %ld entdeckt",
+    cline,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\ntyping error or missing entries in line %ld detected",
+    cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*---------------------------------------------------------------------
+* logische Pruefung 1. Zeile 5.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  if(iele != i)
+    {
+    if(LANG == 1) sprintf(cmess,"%s\nSuperelementnummer falsch\n\
+1.Wert in Zeile %ld ueberpruefen",cline,izeile);
+
+    if(LANG == 2) sprintf(cmess,"%s\nsuperelement number wrong\n\
+check 1st entry in line %ld",cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if(jtyp[i] == 10)
+    {
+    if(!(ityp == 1 || ityp == 10))
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\nAus Superelementtyp 10 kann nur Elementtyp 1 oder \
+10 erzeugt werden\n2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen",
+      cline,i,jzeile[i],i,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nsuperelement type 10 can only generate element type 1 or \
+10\ncheck 2nd entry for superelement %ld in line %ld\n\
+check 2nd entry for superelement %ld in line %ld",
+      cline,i,jzeile[i],i,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+  else if(jtyp[i] == 7 || jtyp[i] == 11) 
+    {
+    if(ityp != 7)
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\nAus Superelementtyp 7 bzw. 11 kann nur Elementtyp 7 \
+erzeugt werden\n2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen",
+      cline,i,jzeile[i],i,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nsuperelement types 7 or 11 can only generate elementtyp 7\
+\ncheck 2nd entry for superelement %ld in line %ld\n\
+check 2nd entry for superelement %ld in line %ld",
+      cline,i,jzeile[i],i,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+  else if(jtyp[i] == 8 || jtyp[i] == 12) 
+    {
+    if(ityp != 8)
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\nAus Superelementtyp 8 bzw. 12 kann nur Elementtyp 8 \
+erzeugt werden\n2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen",
+      cline,i,jzeile[i],i,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nsuperelement types 8 or 12 can only generate elementtyp 8\
+\ncheck 2nd entry for superelement %ld in line %ld\n\
+check 2nd entry for superelement %ld in line %ld",
+      cline,i,jzeile[i],i,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+  else if(jtyp[i] == 20) 
+    {
+    if(!(ityp == 19 || ityp == 20))
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\nAus Superelementtyp 20 koennen nur Elementtypen 19 und 20 \
+erzeugt werden\n2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen",
+      cline,i,jzeile[i],i,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nsuperelement type 20 can only generate elementtypes 19 and 20\
+\ncheck 2nd entry for superelement %ld in line %ld\n\
+check 2nd entry for superelement %ld in line %ld",
+      cline,i,jzeile[i],i,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+  else
+    {
+    if(LANG == 1) sprintf(cmess,"%s\nNicht erlaubt fuer Netzgenerator\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen\n\
+2.Wert fuer Superelement %ld in Zeile %ld ueberpruefen",
+    cline,i,jzeile[i],i,izeile);
+
+    if(LANG == 2) sprintf(cmess,"%s\nNot allowed for net generator\n\
+check 2nd entry for superelement %ld in line %ld\n\
+check 2nd entry for superelement %ld in line %ld",
+    cline,i,jzeile[i],i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+    
+/*---------------------------------------------------------------------
+* Schreibfehler 2. Zeile 5.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  izeile++;
+  
+  cresult= fgets(cline,256,fdatei);
+  if(!cresult)
+    {
+    erif88(hWnd,izeile);
+    return(2);
+    }
+
+  if(ityp == 1 || ityp == 10)
+    {
+    ier= sscanf(cline,"%ld %c %ld %c %ld %c",
+    &ix,&cmodex,&iy,&cmodey,&iz,&cmodez);
+    if(ier != 6) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld entdeckt",
+      cline,izeile);
+ 
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",
+      cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+  else
+    {
+    ier= sscanf(cline,"%ld %c %ld %c",&ix,&cmodex,&iy,&cmodey);
+    if(ier != 4) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld entdeckt",
+      cline,izeile);
+ 
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",
+      cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+/*---------------------------------------------------------------------
+* logische Pruefung 2.Zeile 5.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  if(ix < 1)
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nUnterteilung X unzulaessig fuer Superelement %ld\n\
+1.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\nsubdivision X not allowed for superelement %ld\n\
+check 1st entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if(!(cmodex == 'E' || cmodex == 'e' || cmodex == 'L' || cmodex == 'l'))
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nArt der Unterteilung X unzulaessig fuer Superelement %ld\n\
+2.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\ntype of subdivision X not allowed for superelement %ld\n\
+check 2nd entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if(iy < 1)
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nUnterteilung Y unzulaessig fuer Superelement %ld\n\
+3.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\nsubdivision Y not allowed for superelement %ld\n\
+check 3rd entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if(!(cmodey == 'E' || cmodey == 'e' || cmodey == 'L' || cmodey == 'l'))
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nArt der Unterteilung Y unzulaessig fuer Superelement %ld\n\
+4.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\ntype of subdivision Y not allowed for superelement %ld\n\
+check 4th entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if(ityp == 1 || ityp == 10)
+    {
+    if(iz < 1)
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nUnterteilung Z unzulaessig fuer Superelement %ld\n\
+5.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\nsubdivision Z not allowed for superelement %ld\n\
+check 5th entry in line %ld",cline,i,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+
+    if(!(cmodez == 'E' || cmodez == 'e' || cmodez == 'L' || cmodez == 'l'))
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nArt der Unterteilung Z unzulaessig fuer Superelement %ld\n\
+6.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntype of subdivision Z not allowed for superelement %ld\n\
+check 6th entry in line %ld",cline,i,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+          
+/*---------------------------------------------------------------------
+* Schleifenende
+*--------------------------------------------------------------------*/ 
+  }                                              /* e20 */
+
+/**********************************************************************
+* niflag gesetzt ?
+**********************************************************************/
+if(niflag == 1)
+  {
+        
+/*---------------------------------------------------------------------
+* Schreibfehler 6.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  izeile++;    
+
+  cresult= fgets(cline,256,fdatei);
+  if(!cresult)
+    {
+    erif88(hWnd,izeile);
+    return(2);
+    }
+
+  if(ityp == 1 || ityp == 10)
+    {
+    ier= sscanf(cline,"%lf %lf %lf",&epsx,&epsy,&epsz);
+    if(ier != 3) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld entdeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",
+      cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+  else
+    {
+    ier= sscanf(cline,"%lf %lf",&epsx,&epsy);
+    if(ier != 2) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld entdeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",
+      cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+/*---------------------------------------------------------------------
+* logische Pruefung 6.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  if(fabs(epsx) < 1e-13)
+    {
+    if(LANG == 1) sprintf(cmess,
+      "%s\nFangradius EPSX fast oder gleich 0 in Zeile %ld entdeckt\n\
+1.Wert in Zeile %ld ueberpruefen",cline,izeile,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+      "%s\ntrap radius EPSX about or equal 0 in line %ld detected\n\
+check 1st entry in line %ld",cline,izeile,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if(fabs(epsy) < 1e-13)
+    {
+    if(LANG == 1) sprintf(cmess,
+      "%s\nFangradius EPSY fast oder gleich 0 in Zeile %ld entdeckt\n\
+2.Wert in Zeile %ld ueberpruefen",cline,izeile,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+      "%s\ntrap radius EPSY about or equal 0 in line %ld detected\n\
+check 2nd entry in line %ld",cline,izeile,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+  
+  if(ityp == 1 || ityp == 10)
+    { 
+    if(fabs(epsz) < 1e-13)
+      {
+      if(LANG == 1) sprintf(cmess,
+        "%s\nFangradius EPSZ fast oder gleich 0 in Zeile %ld entdeckt\n\
+3.Wert in Zeile %ld ueberpruefen",cline,izeile,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+        "%s\ntrap radius EPSZ about or equal 0 in line %ld detected\n\
+check 3rd entry in line %ld",cline,izeile,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+  }
+        
+/**********************************************************************
+* Normales Ende
+**********************************************************************/
+return(0);
+}
+

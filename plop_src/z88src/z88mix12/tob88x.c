@@ -1,0 +1,88 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* TOB88X.C
+* 2.9.2002 Rieg
+***********************************************************************/
+#include <windows.h>
+#include <commctrl.h>
+
+#include <z88x.h>
+
+
+TBBUTTON tbb[] = 
+     {
+     0, ITC_GO,   TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0, 0, 0,
+     1, ITC_HELP, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0, 0, 0,
+     0, 0,        TBSTATE_ENABLED, TBSTYLE_SEP,    0, 0, 0, 0,
+     0, 0,        TBSTATE_ENABLED, TBSTYLE_SEP,    0, 0, 0, 0,
+     2, ITC_I1TX, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 0, 0, 0,
+     3, ITC_IATX, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 0, 0, 0,
+     4, ITC_NITX, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 0, 0, 0,
+     5, ITC_I1FX, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 0, 0, 0,
+     6, ITC_IAFX, TBSTATE_ENABLED| TBSTATE_CHECKED,
+                                   TBSTYLE_CHECKGROUP, 0, 0, 0, 0,
+     7, ITC_NIFX, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 0, 0, 0,
+     } ;
+
+/*----------------------------------------------------------------------
+* Function InitToolBar
+*---------------------------------------------------------------------*/
+HWND InitToolBar (HWND hParent)
+{
+extern HINSTANCE hInstance;
+
+HWND hToolBar= CreateToolbarEx (
+               hParent,
+               WS_CHILD | WS_VISIBLE       | WS_CLIPSIBLINGS |
+               CCS_TOP  | TBSTYLE_TOOLTIPS | WS_BORDER | WS_EX_CLIENTEDGE,
+               1,                    /* wID */
+               8,                    /* nBitmaps */
+               hInstance,            /* zu ladende Bitmap */
+               BMP_Z88X  ,           /* zu ladende Bitmap */
+               tbb,                  /* Pointer auf TBBUTTON Array */ 
+               10,                   /* Anzahl Buttons */
+               32,                   /* dxButton */
+               32,                   /* dyButton */
+               32,                   /* dxBitmap */ 
+               32,                   /* dyBitmap */
+               sizeof (TBBUTTON)) ;
+
+      
+return hToolBar ;
+}
+

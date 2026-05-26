@@ -1,0 +1,248 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  function dyn88v liest z88.dyn aus und laesst memory kommen
+*  hier wird File Z88.DYN geoffnet
+*  15.9.2005 Rieg
+***********************************************************************/ 
+
+/***********************************************************************
+* Fuer UNIX
+***********************************************************************/
+#ifdef FR_UNIX
+#include <z88v.h>
+#include <stdio.h>   /* FILE,NULL,fopen,fclose,fgets,sscanf */
+                     /* rewind                              */
+#include <string.h>  /* strstr */
+#include <malloc.h>  /* FR_CALLOC */
+#endif
+
+/***********************************************************************
+* Fuer Windows 95
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88v.h>
+#include <stdio.h>   /* FILE,NULL,fopen,fclose,fgets,sscanf */
+                     /* rewind                              */
+#include <string.h>  /* strstr */
+#include <malloc.h>  /* FR_CALLOC */
+#endif
+
+/***********************************************************************
+*  Functions
+***********************************************************************/
+int wlog88v(FR_INT4,int);
+
+/***********************************************************************
+*  hier beginnt Function dyn88v
+***********************************************************************/
+int dyn88v(void)
+{
+extern FR_INT4AY jtyp;
+extern FR_INT4AY jzeile;
+extern FR_INT4AY ifrei;
+
+extern FILE *fdyn, *fwlo;
+extern char cdyn[];
+
+extern FR_INT4 IDYNMEM;
+extern FR_INT4 MAXSE,MAXESS,MAXKSS,MAXAN;
+extern FR_INT4 MAXGS,MAXKOI,MAXK,MAXE,MAXNFG,MAXNEG,MAXPR,MAXSOR,MAXPUF;
+extern FR_INT4 MFACCOMMON,MAXGP;
+
+char cline[256], cdummy[80];
+  
+/*----------------------------------------------------------------------
+*  dyn- datei z88.dyn oeffnen
+*---------------------------------------------------------------------*/
+wlog88v(0,LOG_OPENZ88DYN);
+
+fdyn= fopen(cdyn,"r");
+if(fdyn == NULL)
+  {
+  wlog88v(0,LOG_NODYN);
+  fclose(fwlo);
+  return(AL_NODYN);
+  }
+
+rewind(fdyn);
+
+/*----------------------------------------------------------------------
+*  dyn- datei z88.dyn lesen
+*---------------------------------------------------------------------*/
+fgets(cline,256,fdyn);
+
+if( (strstr(cline,"DYNAMIC START"))!= NULL)         /* Lesen File */
+  {
+  do
+    {
+    fgets(cline,256,fdyn);
+
+    if( (strstr(cline,"NET START"))!= NULL)         /* Lesen NET */
+      {
+      do
+        {
+        fgets(cline,256,fdyn);
+        if( (strstr(cline,"MAXSE"))!= NULL)         /* Lesen MAXSE */
+          sscanf(cline,"%s %ld",cdummy,&MAXSE);
+        if( (strstr(cline,"MAXESS"))!= NULL)        /* Lesen MAXESS */
+          sscanf(cline,"%s %ld",cdummy,&MAXESS);
+        if( (strstr(cline,"MAXKSS"))!= NULL)        /* Lesen MAXKSS */
+          sscanf(cline,"%s %ld",cdummy,&MAXKSS);
+        if( (strstr(cline,"MAXAN"))!= NULL)        /* Lesen MAXAN */
+          sscanf(cline,"%s %ld",cdummy,&MAXAN);
+        }
+      while( (strstr(cline,"NET END"))== NULL);
+      }
+
+    if( (strstr(cline,"COMMON START"))!= NULL)      /* Lesen COMMON */
+      {
+      do
+        {
+        fgets(cline,256,fdyn);
+        if( (strstr(cline,"MAXGS"))!= NULL)         /* Lesen MAXGS */
+          sscanf(cline,"%s %ld",cdummy,&MAXGS);
+        if( (strstr(cline,"MAXKOI"))!= NULL)        /* Lesen MAXKOI */
+          sscanf(cline,"%s %ld",cdummy,&MAXKOI);
+        if( (strstr(cline,"MAXK"))!= NULL)          /* Lesen MAXK */
+          sscanf(cline,"%s %ld",cdummy,&MAXK);
+        if( (strstr(cline,"MAXE"))!= NULL)          /* Lesen MAXE */
+          sscanf(cline,"%s %ld",cdummy,&MAXE);
+        if( (strstr(cline,"MAXNFG"))!= NULL)        /* Lesen MAXNFG */
+          sscanf(cline,"%s %ld",cdummy,&MAXNFG);
+        if( (strstr(cline,"MAXNEG"))!= NULL)        /* Lesen MAXNEG */
+          sscanf(cline,"%s %ld",cdummy,&MAXNEG);
+        if( (strstr(cline,"MAXPR"))!= NULL)         /* Lesen MAXPR */
+          sscanf(cline,"%s %ld",cdummy,&MAXPR);
+        if( (strstr(cline,"MAXSOR"))!= NULL)        /* Lesen MAXSOR */
+          sscanf(cline,"%s %ld",cdummy,&MAXSOR);
+        if( (strstr(cline,"MAXPUF"))!= NULL)        /* Lesen MAXPUF */
+          sscanf(cline,"%s %ld",cdummy,&MAXPUF);
+        }
+      while( (strstr(cline,"COMMON END"))== NULL);
+      }                                             /* end if COMMON START */
+
+    if( (strstr(cline,"PLOT START"))!= NULL)        /* Lesen PLOT */
+      {
+      do
+        {
+        fgets(cline,256,fdyn);
+        if( (strstr(cline,"MFACCOMMON"))!= NULL)    /* Lesen MFACCOMMON */
+          sscanf(cline,"%s %ld",cdummy,&MFACCOMMON);
+        if( (strstr(cline,"MAXGP"))!= NULL)         /* Lesen MAXGP */
+          sscanf(cline,"%s %ld",cdummy,&MAXGP);
+        }
+      while( (strstr(cline,"PLOT END"))== NULL);
+      }                                             /* end if PLOT START */
+
+    }
+  while( (strstr(cline,"DYNAMIC END"))== NULL);     
+    
+  }                                                 /* end if DYNAMIC START */
+else
+  {
+  wlog88v(0,LOG_WRONGDYN);
+  fclose(fwlo);
+  return(AL_WRONGDYN);
+  }  
+
+if( MAXK <= 0 || MAXE <= 0)
+  {
+  wlog88v(0,LOG_WRONGDYN);
+  fclose(fwlo);
+  return(AL_WRONGDYN);
+  }  
+
+/*----------------------------------------------------------------------
+*  korrekt gelesen, file fdyn schliessen
+*---------------------------------------------------------------------*/
+fclose(fdyn);
+
+wlog88v(MAXK,LOG_MAXK);
+wlog88v(MAXE,LOG_MAXE);
+
+wlog88v(0,LOG_OKDYN);
+
+/*----------------------------------------------------------------------
+*  memory kommen lassen ..
+*---------------------------------------------------------------------*/
+wlog88v(0,LOG_ALLOCMEMY);
+
+/*======================================================================
+*  memory fuer jtyp,jzeile,ifrei
+*=====================================================================*/
+jtyp= (FR_INT4AY) FR_CALLOC((MAXE+1),sizeof(FR_INT4));
+if(jtyp == NULL)
+  {
+  wlog88v(1,LOG_ARRAYNOTOK);
+  fclose(fwlo);
+  return(AL_NOMEMY);
+  }
+else
+  wlog88v(1,LOG_ARRAYOK);
+
+jzeile= (FR_INT4AY) FR_CALLOC((MAXE+1),sizeof(FR_INT4));
+if(jzeile == NULL)
+  {
+  wlog88v(2,LOG_ARRAYNOTOK);
+  fclose(fwlo);
+  return(AL_NOMEMY);
+  }
+else
+  wlog88v(2,LOG_ARRAYOK);
+
+ifrei= (FR_INT4AY) FR_CALLOC((MAXK+1),sizeof(FR_INT4));
+if(ifrei == NULL)
+  {
+  wlog88v(3,LOG_ARRAYNOTOK);
+  fclose(fwlo);
+  return(AL_NOMEMY);
+  }
+else
+  wlog88v(3,LOG_ARRAYOK);
+
+/***********************************************************************
+* alles o.k. 
+***********************************************************************/
+IDYNMEM = (MAXE+1)*sizeof(FR_INT4);
+IDYNMEM+= (MAXE+1)*sizeof(FR_INT4);
+IDYNMEM+= (MAXK+1)*sizeof(FR_INT4);
+
+wlog88v(IDYNMEM,LOG_SUMMEMY);
+wlog88v(0,LOG_EXITDYN88V);
+
+return(0);
+}

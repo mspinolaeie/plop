@@ -1,0 +1,105 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* Functions zur Vergleichs-Spannungsberechnung
+*
+* torgh:  gh fuer torus nr.8 & 12
+* sheigh: gh fuer scheibe nr.7 & 11
+* hexgh:  gh fuer hexaeder nr.1 & nr.10
+* platgh: gh fuer platte nr.18,19 und 20
+*
+* 4.10.2005 Rieg
+***********************************************************************/
+
+/***********************************************************************
+* Fuer UNIX
+***********************************************************************/
+#ifdef FR_UNIX
+#include <z88d.h>
+#endif
+
+/***********************************************************************
+* Fuer Windows 95
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88d.h>
+#endif
+
+/***********************************************************************
+* hier beginnt Function torgh
+***********************************************************************/
+FR_DOUBLE torgh(FR_DOUBLE sig[])
+{        
+FR_DOUBLE fret;
+fret= FR_SQRT(sig[1]*sig[1] + sig[4]*sig[4] + sig[2]*sig[2] - 
+             (sig[1]*sig[4] + sig[4]*sig[2] + sig[1]*sig[2]) +
+           3.*sig[3]*sig[3]);
+return(fret);
+}
+        
+/***********************************************************************
+* hier beginnt Function sheigh
+***********************************************************************/
+FR_DOUBLE sheigh(FR_DOUBLE sig[])
+{
+FR_DOUBLE fret;
+fret= FR_SQRT(sig[1]*sig[1] + sig[2]*sig[2] - sig[1]*sig[2] +
+           3.*sig[3]*sig[3]);
+return(fret);
+}
+        
+/***********************************************************************
+* hier beginnt Function hexgh
+***********************************************************************/
+FR_DOUBLE hexgh(FR_DOUBLE sig[])
+{
+FR_DOUBLE fret;
+fret= FR_SQRT(sig[1]*sig[1] + sig[2]*sig[2] + sig[3]*sig[3] - 
+             (sig[1]*sig[2] + sig[2]*sig[3] + sig[1]*sig[3]) + 
+          3.*(sig[4]*sig[4] + sig[5]*sig[5] + sig[6]*sig[6]));
+return(fret);
+}
+
+/***********************************************************************
+* hier beginnt Function platgh
+***********************************************************************/
+FR_DOUBLE platgh(FR_DOUBLE rsig[])
+{
+FR_DOUBLE fret;
+fret= FR_SQRT(rsig[1]*rsig[1] + rsig[2]*rsig[2]
+             -rsig[1]*rsig[2] + 3.*rsig[3]*rsig[3]);
+return(fret);
+}

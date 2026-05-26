@@ -1,0 +1,93 @@
+Look for hints at end of file..
+Erlaeuterungen stehen am Fileende..
+
+COLOR START
+
+  GRAFIC START
+    NORMAL    1    0    0  254
+    DEFLECTED 1  254    0    0    
+    ELEMENTS       0    0  128
+    NODES          0  128    0
+    STRESS01     128    0  255
+    STRESS02     128  128  192
+    STRESS03       0  128  192
+    STRESS04       0  128  255
+    STRESS05       0  128    0
+    STRESS06       0  192    0
+    STRESS07       0  255    0
+    STRESS08     255  255    0
+    STRESS09     255  128    0
+    STRESS10     255    0    0
+  GRAFIC END
+
+COLOR END
+     
+-----------------------------------------------------------------------------
+Hints:
+
+Section GRAFIC for Plotprogramm Z88P
+
+   Windows colors are a mixture of red, green and blue. Thus there are 3 
+   intensity values from 0 to 255 each. Depending of your video device
+   different colors are possible. Some color combinations are not possible
+   with normal VGA cards and Windows uses a color automatically which comes
+   close to your choice. Perhaps you need some tests and experiments. 
+   The first value of the Keywords NORMAL and DEFLECTED are the line width.
+   Standard value 1 pixel.
+
+   Key Words: 
+    NORMAL    : line width in pixels (Integer), 3 intensity values (Integer)
+    DEFLECTED : line width in pixels (Integer), 3 intensity values (Integer)
+    ELEMENTS  : 3 intensity values (Integer)
+    NODES     : 3 intensity values (Integer)
+    STRESS01  : lowest stress value, 3 intensity values (Integer)
+    STRESS02  : next higher stress value, 3 intensity values (Integer)
+    STRESS03
+    STRESS04
+    STRESS05
+    STRESS06      ......
+    STRESS07
+    STRESS08
+    STRESS09
+    STRESS10  : highest stress value, 3 intensity values (Integer)
+
+   The color scale is formed of 10 values with each value changeable.   
+   Trick: Change STRESS01 to STRESS09 to an inconspicuous color and set 
+   only STRESS10 to 255 0 0 to see only the maximum stresses.
+   
+-----------------------------------------------------------------------------
+Erlaeuterungen:
+
+Sektion GRAFIC fuer Plotprogramm Z88P
+
+   Die Farben werden bei Windows aus einer Mischung aus Rot-, Gruen- und
+   Blau- Anteilen gebildet. Daher pro Farbe 3 Intensitaetswerte von 0 .. 255.
+   Je nach Moeglichkeiten der Videokarte ergeben sich unterschiedliche Farben.
+   Manche Farbkombination sind z.B. bei normalen VGA- Karten nicht darstellbar,
+   Windows nimmt dann automatisch eine Farbe, welche der gewaehlten
+   Kombination am naechsten kommt. Hier kommt man ohne Experimente nicht aus..
+   Bei den Schluesseln NORMAL, DEFLECTED wird zuvor noch die Linienbreite
+   gesetzt. Standardwert 1 Pixel.
+
+   Schluesselworte: 
+    NORMAL    : Linienbreite in Pixel (Integer), 3 Intensitaetswerte (Integer)
+    DEFLECTED : Linienbreite in Pixel (Integer), 3 Intensitaetswerte (Integer)
+    ELEMENTS  : 3 Intensitaetswerte (Integer)
+    NODES     : 3 Intensitaetswerte (Integer)
+    STRESS01  : niedrigster Spannungswert, 3 Intensitaetswerte (Integer)
+    STRESS02  : naechsthoeherer Spannungswert, 3 Intensitaetswerte (Integer)
+    STRESS03
+    STRESS04
+    STRESS05
+    STRESS06      ......
+    STRESS07
+    STRESS08
+    STRESS09
+    STRESS10  : hoechster Spannungswert, 3 Intensitaetswerte (Integer)
+
+   Bei der Farbskala werden, wie ersichtlich, 10 Werte angegeben, deren
+   Farbwerte gewaehlt werden koennen. Damit kann man folgenden Trick machen:
+   die ersten 9 Farbwerte auf eine unauffaellige Farbe setzen, nur den 10.
+   Farbwert STRESS10 auf z.B. 255 0 0 setzen.. so sehen Sie nur die hoechsten
+   Vergleichsspannungen.
+   

@@ -1,0 +1,203 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* ale88p gibt Alert-Boxen aus (1 int)
+* 2.9.2002 Rieg
+***********************************************************************/ 
+/***********************************************************************
+* WindowsNT und 95
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88p.h>
+#include <windows.h>
+#endif
+
+/***********************************************************************
+* hier beginnt Function ale88p
+***********************************************************************/
+int ale88p(int ialert)
+{
+extern FR_INT4 LANG;
+
+char cmess[256];
+
+switch(ialert)
+  {
+  case AL_NOLOG:
+    if(LANG == 1) strcpy(cmess,"Kann Z88P.LOG nicht oeffnen !    STOP");
+    if(LANG == 2) strcpy(cmess,"Cannot open Z88P.LOG !    STOP");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_NODYN:
+    if(LANG == 1) strcpy(cmess,"Kann Z88.DYN nicht oeffnen !    STOP");
+    if(LANG == 2) strcpy(cmess,"Cannot open Z88.DYN !    STOP");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_WRONGDYN:
+    if(LANG == 1) strcpy(cmess,"Z88.DYN ist nicht korrekt !    STOP");
+    if(LANG == 2) strcpy(cmess,"Z88.DYN is invalid or wrong !    STOP");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_NOMEMY:
+    if(LANG == 1) strcpy(cmess,"Nicht genug dynamischer Speicher !    STOP\
+    Abhilfe: Eintraege in Z88.DYN erhoehen.");
+    if(LANG == 2) strcpy(cmess,"Dynamic memory exhausted !    STOP\
+    Recover: increase entries in Z88.DYN .");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_NOSTRFI:
+    if(LANG == 1) strcpy(cmess,"Strukturfile nicht gefunden !\
+    Anderes Strukturfile mit > Datei > Strukturfile angeben.");
+    if(LANG == 2) strcpy(cmess,"Structure file not found !\
+    Enter a valid filename in section > File > Structure File.");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONQUESTION);
+  break;  
+
+  case AL_NOO2:
+    if(LANG == 1) strcpy(cmess,"Z88O2.TXT nicht gefunden !\
+    Daher keine Anzeige der verformten Struktur.\
+    Zuerst Verformungsrechnung mit Z88F.");
+    if(LANG == 2) strcpy(cmess,"Z88O2.TXT not found !\
+    Thus no view of deflected structure.\
+    Start a solver run with Z88F first.");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONQUESTION);
+  break;
+    
+  case AL_NOO5:
+    if(LANG == 1) strcpy(cmess,"Z88O5.TXT nicht gefunden !\
+    Daher keine Anzeige der Vergleichsspannungen.\
+    Zuerst Spannungsberechnung mit Z88D, in Z88I3.TXT NINT > 0 setzen.");
+    if(LANG == 2) strcpy(cmess,"Z88O5.TXT not found !\
+    Thus no view of von Mises stresses.\
+    Start a stress computation with Z88D, choose NINT > 0 in Z88I3.TXT .");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONQUESTION);
+  break;    
+
+  case AL_NOPLOF:
+    if(LANG == 1) strcpy(cmess,"Konnte Plotterfile nicht oeffnen !\
+    File gesperrt ?, Attribute ? Oder Device nicht vorhanden ?");
+    if(LANG == 2) strcpy(cmess,"Could not open plotter file !\
+    File locked ? Attributes ? Device not existing ?");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONQUESTION);
+  break;  
+
+  case AL_EXMAXGP:
+    if(LANG == 1) strcpy(cmess,"Speicher fuer Gausspunkte ueberschritten !\
+    STOP    Abhilfe: MAXGP in Z88.DYN erhoehen.");
+    if(LANG == 2) strcpy(cmess,"Memory for Gauss points exhausted !    STOP\
+    Recover: increase MAXGP in Z88.DYN .");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_NINT0:
+    if(LANG == 1) strcpy(cmess,"Integrationsordnung ist Null: Eckknoten !\
+    STOP    Neuer Lauf Z88D mit NINT > 0 in Z88I3.TXT erforderlich.");
+    if(LANG == 2) strcpy(cmess,"Integration constant is zero: corner nodes !\
+    STOP    Needs a new Z88D run, enter NINT > 0 in Z88I3.TXT .");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_EXMAXK:
+    if(LANG == 1) strcpy(cmess,"Speicher fuer Knoten ueberschritten !    STOP\
+    Abhilfe: MAXK oder MFACCOMMON in Z88.DYN erhoehen.");
+    if(LANG == 2) strcpy(cmess,"Memory for nodes exhausted !    STOP\
+    Recover: increase MAXK or MFACCOMMON in Z88.DYN .");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_EXMAXE:
+    if(LANG == 1) strcpy(cmess,"Speicher fuer Elemente ueberschritten !\
+    STOP    Abhilfe: MAXE oder MFACCOMMON in Z88.DYN erhoehen.");
+    if(LANG == 2) strcpy(cmess,"Memory for elements exhausted !    STOP\
+    Recover: increase MAXE or MFACCOMMON in Z88.DYN .");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_WRONGDIM:
+    if(LANG == 1) strcpy(cmess,"Falsche Dimension im Structurfile !\
+    STOP    Abhilfe: Im Strukturfile 2 oder 3 fuer Dimension waehlen.");
+    if(LANG == 2) strcpy(cmess,"Wrong dimension in structur file !\
+    STOP    Recover: enter 2 or 3 for dimension in structure file.");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_NOCOL:
+    if(LANG == 1) 
+      strcpy(cmess,"Kann Farb- Steuerfile Z88P.COL nicht oeffnen !    STOP");
+    if(LANG == 2)
+      strcpy(cmess,"Cannot open color file Z88P.COL !    STOP");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+
+  case AL_WRONGCOL:
+    if(LANG == 1) 
+      strcpy(cmess,"Farb- Steuerfile Z88P.COL ist nicht korrekt !    STOP");
+    if(LANG == 2)
+      strcpy(cmess,"Color file Z88P.COL is invalid or wrong !    STOP");
+    MessageBox(NULL,cmess, "Z88P",MB_OK | MB_ICONHAND);
+  break;
+  }
+return 0;
+}  
+@

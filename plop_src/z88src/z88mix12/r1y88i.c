@@ -1,0 +1,172 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* r1y88i liest Z88O1.BNY ein
+* und oeffnet und schliesst dieses File
+* 16.2.2005 Rieg 
+***********************************************************************/
+
+/***********************************************************************
+* Fuer UNIX
+***********************************************************************/
+#ifdef FR_UNIX
+#include <z88i.h>
+#include <stdio.h>    /* FILE,fopen,fclose,fprintf,fwrite */
+                      /* fread,rewind,NULL */
+#endif
+
+/***********************************************************************
+* Fuer Windows 95
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88i.h>
+#include <stdio.h>    /* FILE,fopen,fclose,fprintf,fwrite */
+                      /* fread,rewind,NULL */
+#endif
+
+/***********************************************************************
+*  Functions
+***********************************************************************/
+int wrim88i(FR_INT4,int);
+int wlog88i2(FR_INT4,int);
+
+/***********************************************************************
+* hier beginnt Function r1y88i
+***********************************************************************/
+int r1y88i(void)
+{
+extern FILE *f1y,*fl2;
+extern char c1y[],c3y[];
+
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+extern FR_DOUBLEAY emod;
+extern FR_DOUBLEAY rnue;
+extern FR_DOUBLEAY qpara;
+extern FR_DOUBLEAY riyy;
+extern FR_DOUBLEAY eyy;
+extern FR_DOUBLEAY rizz;
+extern FR_DOUBLEAY ezz;
+extern FR_DOUBLEAY rit;
+extern FR_DOUBLEAY wt;
+
+extern FR_INT4AY ifrei; 
+extern FR_INT4AY ioffs; 
+extern FR_INT4AY ityp; 
+extern FR_INT4AY koffs; 
+extern FR_INT4AY koi; 
+extern FR_INT4AY ivon; 
+extern FR_INT4AY ibis; 
+extern FR_INT4AY intord; 
+
+extern FR_INT4 ndim,nkp,ne,nfg,neg,ibflag,ipflag,iqflag;
+extern FR_INT4 nkoi;
+
+FR_INT4 i;
+
+/***********************************************************************
+* Start Function: Oeffnen des Files
+***********************************************************************/
+f1y= fopen(c1y,"rb");
+if(f1y == NULL)
+  {
+  wlog88i2(0,LOG_NO1Y);
+  fclose(fl2);
+  return(AL_NO1Y);
+  }
+rewind(f1y);
+
+/**********************************************************************
+* Einlesen des Binaerfiles Z88O1.BNY
+**********************************************************************/
+wrim88i(0,TX_REAO1Y);
+wlog88i2(0,LOG_REAO1Y);
+
+fread(&ndim,  sizeof(FR_INT4),1,f1y);
+fread(&nkp,   sizeof(FR_INT4),1,f1y);
+fread(&ne,    sizeof(FR_INT4),1,f1y);
+fread(&nfg,   sizeof(FR_INT4),1,f1y);
+fread(&neg,   sizeof(FR_INT4),1,f1y);
+fread(&ibflag,sizeof(FR_INT4),1,f1y);
+fread(&ipflag,sizeof(FR_INT4),1,f1y);
+fread(&iqflag,sizeof(FR_INT4),1,f1y);
+
+for(i = 1;i <= nkp;i++)
+  { 
+  fread(&x[i],     sizeof(FR_DOUBLE),1,f1y);
+  fread(&y[i],     sizeof(FR_DOUBLE),1,f1y);
+  fread(&z[i],     sizeof(FR_DOUBLE),1,f1y);
+  fread(&ifrei[i], sizeof(FR_INT4),  1,f1y);
+  fread(&ioffs[i], sizeof(FR_INT4),  1,f1y);
+  }
+
+for(i = 1;i <= ne;i++)
+  { 
+  fread(&ityp[i],  sizeof(FR_INT4),  1,f1y);
+  fread(&koffs[i], sizeof(FR_INT4),  1,f1y);
+  }
+       
+fread(&nkoi, sizeof(FR_INT4),1,f1y);
+for(i = 1;i <= nkoi;i++)
+  fread(&koi[i], sizeof(FR_INT4),1,f1y);
+
+for(i = 1;i <= neg;i++)
+  { 
+  fread(&ivon[i],   sizeof(FR_INT4),  1,f1y);
+  fread(&ibis[i],   sizeof(FR_INT4),  1,f1y);
+  fread(&emod[i],   sizeof(FR_DOUBLE),1,f1y);
+  fread(&rnue[i],   sizeof(FR_DOUBLE),1,f1y);
+  fread(&intord[i], sizeof(FR_INT4),  1,f1y);
+  fread(&qpara[i],  sizeof(FR_DOUBLE),1,f1y);
+  fread(&riyy[i],   sizeof(FR_DOUBLE),1,f1y);
+  fread(&eyy[i],    sizeof(FR_DOUBLE),1,f1y);
+  fread(&rizz[i],   sizeof(FR_DOUBLE),1,f1y);
+  fread(&ezz[i],    sizeof(FR_DOUBLE),1,f1y);
+  fread(&rit[i],    sizeof(FR_DOUBLE),1,f1y);
+  fread(&wt[i],     sizeof(FR_DOUBLE),1,f1y);
+  }
+
+/**********************************************************************
+* File Z88O1.BNY schliessen, Ende
+**********************************************************************/
+fclose(f1y);
+
+wlog88i2(0,LOG_R1Y88OK);
+
+return(0);
+}
+

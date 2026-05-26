@@ -1,0 +1,390 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* Diese Compilerunit umfasst:
+* wrim88i gibt Texte aus (1 FR_INT4)
+* wtyp88i gibt Elementtypen aus (1 FR_INT4, 1 FR_INT4)
+* wfor88i gibt kfoun beim Sortieren aus (1 FR_INT4, 1 FR_INT4)
+* wran88i gibt Randbedingungen aus (1 FR_INT4, 1 FR_INT4)
+* 10.10.2005 Rieg
+***********************************************************************/ 
+
+/***********************************************************************
+* Fuer WindowsNT und 95
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88i.h>
+#include <windows.h>
+#include <string.h>   /* strlen  */
+#include <stdio.h>    /* sprintf */
+#include <stdlib.h>   /* ltoa    */
+#endif
+
+/***********************************************************************
+*  hier beginnt Function wrim88i
+***********************************************************************/
+int wrim88i(FR_INT4 i,int iatx)
+{
+extern HDC hDC;
+extern FR_INT4 LANG;
+
+size_t laenge;
+
+char cline[80];
+
+switch(iatx)
+  {
+
+/*----------------------------------------------------------------------
+*  fuer Z88I1
+*---------------------------------------------------------------------*/
+  case TX_REAI1:
+    if(LANG == 1) TextOut(hDC,10,50,"Z88I1.TXT einlesen :",20);
+    if(LANG == 2) TextOut(hDC,10,50,"Reading Z88I1.TXT : ",20);
+  break;
+
+  case TX_KOOR:
+    if(LANG == 1) TextOut(hDC,290,50,"Koordinaten einlesen",20);
+    if(LANG == 2) TextOut(hDC,290,50,"Reading coordinates ",20);
+  break;
+
+  case TX_POLAR:
+    if(LANG == 1) TextOut(hDC,290,50,"Polar/Zylinder-Koordinaten",26);
+    if(LANG == 2) TextOut(hDC,290,50,"Polar/cylinder-coordinates",26);
+  break;
+
+  case TX_KOIN:
+    if(LANG == 1) 
+      TextOut(hDC,290,50,"Koinzidenz einlesen                 ",36);
+    if(LANG == 2) 
+      TextOut(hDC,290,50,"Reading element informations        ",36);
+  break;
+
+  case TX_EGES:
+    if(LANG == 1) TextOut(hDC,290,50,"Elastizitaetsgesetze einlesen",29);
+    if(LANG == 2) TextOut(hDC,290,50,"Reading material informations",29);
+  break;
+
+  case TX_Z88A:
+    if(LANG == 1) TextOut(hDC,10,70,">>> Start Z88AI <<<",19);
+    if(LANG == 2) TextOut(hDC,10,70,">>> start Z88AI <<<",19);
+  break;
+
+  case TX_SUMMEMY:
+    if(LANG == 1) sprintf(cline,"Programm hat %ld MB angefordert", i);
+    if(LANG == 2) sprintf(cline,"program desired %ld MB",i);
+    laenge= strlen(cline);
+    TextOut(hDC,10,90,cline,laenge);
+  break;
+
+  case TX_FORMA:
+    if(LANG == 1) TextOut(hDC,10,110,"Formatieren",11);
+    if(LANG == 2) TextOut(hDC,10,110,"Formatting ",11);
+  break;
+
+  case TX_NONZ:
+    if(LANG == 1) sprintf(cline,"%ld Elemente in IJ entdeckt", i);
+    if(LANG == 2) sprintf(cline,"%ld elements in IJ detected",i);
+    laenge= strlen(cline);
+    TextOut(hDC,10,150,cline,laenge);
+  break;
+
+  case TX_GSSO:
+    if(LANG == 1) TextOut(hDC,290,150,"Pointer- Structure IJ assembliert",33);
+    if(LANG == 2) TextOut(hDC,290,150,"pointer structure IJ assembled",30);
+  break;
+
+  case TX_WRI1Y:
+    if(LANG == 1) TextOut(hDC,10,170,"Z88O1.BNY beschreiben",21);
+    if(LANG == 2) TextOut(hDC,10,170,"Writing Z88O1.BNY    ",21);
+  break;
+
+  case TX_WRIO0:
+    if(LANG == 1) TextOut(hDC,290,170,"Z88O0.TXT beschreiben  ",23);
+    if(LANG == 2) TextOut(hDC,290,170,"Writing Z88O0.TXT      ",23);
+  break;
+
+  case TX_GSERF:
+    if(LANG == 1) sprintf(cline,"GS erfordert %ld Elemente",i);
+    if(LANG == 2) sprintf(cline,"GS needs %ld elements",i);
+    laenge= strlen(cline);
+    TextOut(hDC,10,190,cline,laenge);
+  break;
+
+  case TX_KOIERF:
+    if(LANG == 1) sprintf(cline,"KOI erfordert %ld Elemente",i);
+    if(LANG == 2) sprintf(cline,"KOI needs %ld elements",i);
+    laenge= strlen(cline);
+    TextOut(hDC,290,190,cline,laenge);
+  break;
+
+  case TX_WRI4Y:
+    if(LANG == 1) TextOut(hDC,10,210,"Z88O4.BNY beschreiben",21);
+    if(LANG == 2) TextOut(hDC,10,210,"Writing Z88O4.BNY    ",21);
+  break;
+
+  case TX_ENDI1:
+    if(LANG == 1) sprintf(cline,"Ende Z88I1");
+    if(LANG == 2) sprintf(cline,"Z88I1 done");
+    laenge= strlen(cline);
+    TextOut(hDC,290,210,cline,laenge);
+
+    if(LANG == 1) sprintf(cline,
+    "Sie koennten jetzt Z88.DYN einstellen (MAXGS & MAXKOI),");
+    if(LANG == 2) sprintf(cline,"You may now adjust Z88.DYN (MAXGS & MAXKOI)");
+    laenge= strlen(cline);
+    TextOut(hDC,10,230,cline,laenge);
+
+    if(LANG == 1) sprintf(cline,"und dann starten Sie den Solver Part2: Z88I2");
+    if(LANG == 2) sprintf(cline,"and then lauch the solver part2: Z88I2");
+    laenge= strlen(cline);
+    TextOut(hDC,10,250,cline,laenge);
+  break;
+
+/*----------------------------------------------------------------------
+*  fuer Z88I2
+*---------------------------------------------------------------------*/
+  case TX_REAO1Y:
+    if(LANG == 1) TextOut(hDC,10,50,"Fortsetzung: Z88O1.BNY einlesen   ",34);
+    if(LANG == 2) TextOut(hDC,10,50,"execution continuing:get Z88O1.BNY",34);
+  break;
+
+  case TX_REA4Y:
+    if(LANG == 1) TextOut(hDC,290,50,"Z88O4.BNY einlesen",18);
+    if(LANG == 2) TextOut(hDC,290,50,"reading Z88O4.BNY ",18);
+  break;
+
+  case TX_Z88B:
+    if(LANG == 1) TextOut(hDC,10,70,">>> Start Z88BI: Pass 2 von Z88I2 <<<",37);
+    if(LANG == 2) TextOut(hDC,10,70,">>> Start Z88BI: pass  2 of Z88I2 <<<",37);
+  break;
+
+  case TX_COMPI:
+    if(LANG == 1) TextOut(hDC,10,110,"Compilation",11);
+    if(LANG == 2) TextOut(hDC,10,110,"Compilation",11);
+  break;
+
+  case TX_REAI5:
+    if(LANG == 1) TextOut(hDC,290,110,"Lastvektoren berechnen",22);
+    if(LANG == 2) TextOut(hDC,290,110,"computing load vectors",22);
+  break;
+
+  case TX_Z88CC:
+    if(LANG == 1)TextOut(hDC,10,130,">>> Start Z88CI: Pass 2 von Z88I2 <<<",37);
+    if(LANG == 2)TextOut(hDC,10,130,">>> Start Z88CI: pass 2 of Z88I2 <<< ",37);
+  break;
+
+  case TX_REAI4:
+    if(LANG == 1) TextOut(hDC,10,150,"Lesen Steuerfile Z88I4.TXT ",27);
+    if(LANG == 2) TextOut(hDC,10,150,"Reading para file Z88I4.TXT",27);
+  break;
+
+  case TX_REAI2:
+    if(LANG == 1) TextOut(hDC,290,150,"Lesen RB-File Z88I2.TXT",23);
+    if(LANG == 2) TextOut(hDC,290,150,"Reading const Z88I2.TXT",23);
+  break;
+
+  case TX_REAI2P2:
+    if(LANG == 1) TextOut(hDC,290,150,"Lesen RB-File Z88I2.TXT",23);
+    if(LANG == 2) TextOut(hDC,290,150,"Reading const Z88I2.TXT",23);
+  break;
+
+  case TX_ERBPA:
+    if(LANG == 1) sprintf(cline,"Einarbeiten der Randbed. Pass %ld",i);
+    if(LANG == 2) sprintf(cline,"Incorporating constraints pass %ld",i);
+    laenge= strlen(cline);
+    TextOut(hDC,10,170,cline,laenge);
+  break;
+
+  case TX_WRIO1:
+    if(LANG == 1) TextOut(hDC,10,190,"Z88O1.TXT beschreiben",21);
+    if(LANG == 2) TextOut(hDC,10,190,"Writing Z88O1.TXT    ",21);
+  break;
+
+  case TX_SCAL88:
+    if(LANG == 1) TextOut(hDC,290,190,"Start SCAL88",12);
+    if(LANG == 2) TextOut(hDC,290,190,"Start SCAL88",12);
+  break;
+
+  case TX_SICCG88:
+    if(LANG == 1)
+      TextOut(hDC,10,210,">>>>> Start des Solvers SICCG88 <<<<<",37);
+    if(LANG == 2)
+      TextOut(hDC,10,210,">>>>> start of solver SICCG88 <<<<<  ",37);
+  break;
+
+  case TX_SORCG88:
+    if(LANG == 1)
+      TextOut(hDC,10,210,">>>>> Start des Solvers SORCG88 <<<<<",37);
+    if(LANG == 2)
+      TextOut(hDC,10,210,">>>>> start of solver SORCG88 <<<<<  ",37);
+  break;
+
+  case TX_PART88:
+    if(LANG == 1) sprintf(cline,"par. Cholesky- Zerl. Nr.%ld",i);
+    if(LANG == 2) sprintf(cline,"inc. Cholesky decom. no.%ld",i);
+    laenge= strlen(cline);
+    TextOut(hDC,330,210,cline,laenge);
+  break;
+
+  case TX_NFG:
+    if(LANG == 1)
+      sprintf(cline,"%ld * %ld = Groesse Gleichungsystem",i,i);
+    if(LANG == 2)
+      sprintf(cline,"%ld * %ld = size of system of equations",i,i);
+    laenge= strlen(cline);
+    TextOut(hDC,10,230,cline,laenge);
+  break;
+
+  case TX_ITERA:
+    sprintf(cline,"%ld. Iteration",i);
+    laenge= strlen(cline);
+    TextOut(hDC,10,250,cline,laenge);
+  break;
+
+  case TX_JACOOK:
+    if(LANG == 1) sprintf(cline,"Residuenvektor < Eps, schaut gut aus!");
+    if(LANG == 2) sprintf(cline,"limit Eps reached, sounds good!");
+    laenge= strlen(cline);
+    TextOut(hDC,10,270,cline,laenge);
+  break;
+
+  case TX_JACONOTOK:
+    if(LANG == 1) sprintf(cline,"Eps nicht erreicht, maxit erreicht -leider!");
+    if(LANG == 2) sprintf(cline,"eps not reached, maxit reached, oops!");
+    laenge= strlen(cline);
+    TextOut(hDC,10,270,cline,laenge);
+  break;
+
+  case TX_WRI3Y:
+    if(LANG == 1) TextOut(hDC,10,290,"Z88O3.BNY beschreiben",21);
+    if(LANG == 2) TextOut(hDC,10,290,"Writing Z88O3.BNY    ",21);
+  break;
+
+  case TX_WRIO2:
+    if(LANG == 1) TextOut(hDC,290,290,"Z88O2.TXT beschreiben, Ende Z88I2",33);
+    if(LANG == 2) TextOut(hDC,290,290,"Writing Z88O2.TXT, Z88I2 done    ",33);
+  break;
+
+  }
+
+return(0);
+}
+
+/***********************************************************************
+*  function wtyp88i gibt Elementtypen in Z88I aus
+***********************************************************************/ 
+int wtyp88i(FR_INT4 k,FR_INT4 i)
+{
+extern HDC hDC;
+extern FR_INT4 LANG;
+
+size_t laenge;
+
+char cline[80];
+
+if(LANG == 1) sprintf(cline,"Nr. %ld Typ %ld",k,i);
+if(LANG == 2) sprintf(cline,"no. %ld type %ld",k,i);
+laenge= strlen(cline);
+TextOut(hDC,330,130,cline,laenge);
+
+return(0);
+}
+
+/***********************************************************************
+*  function wfor88i gibt kfoun beim Sortieren in Z88I1 aus
+***********************************************************************/ 
+int wfor88i(FR_INT4 k,FR_INT4 i)
+{
+extern HDC hDC;
+extern FR_INT4 LANG;
+
+size_t laenge;
+
+char cline[80];
+
+if(LANG == 1) sprintf(cline,"Nr. %ld, Sortieren, SOR %ld",k,i);
+if(LANG == 2) sprintf(cline,"no. %ld, sorting, SOR %ld",k,i);
+laenge= strlen(cline);
+TextOut(hDC,10,130,cline,laenge);
+
+return(0);
+}
+
+/***********************************************************************
+*  function wran88i gibt Randbedingungen aus
+***********************************************************************/ 
+int wran88i(FR_INT4 k,FR_INT4 i)
+{
+extern HDC hDC;
+extern FR_INT4 LANG;
+
+size_t laenge;
+
+char cline[80];
+
+if(LANG == 1) sprintf(cline,"Randbedingung Nr. %ld Typ %ld",k,i);
+if(LANG == 2) sprintf(cline,"constraint no. %ld type %ld",k,i);
+laenge= strlen(cline);
+TextOut(hDC,290,170,cline,laenge);
+
+return(0);
+}
+@

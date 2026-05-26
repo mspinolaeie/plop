@@ -1,0 +1,393 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/**********************************************************************
+* Function g2i188 prueft die 2.Eingabegruppe fuer Z88I1.TXT & Z88NI.TXT
+* 9.09.2002 Rieg
+**********************************************************************/
+#ifdef FR_WIN95
+#include <z88v.h>
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#endif
+
+/***********************************************************************
+* Functions
+***********************************************************************/
+void erif88(HWND hWnd,long izeile);
+
+/***********************************************************************
+* Start G2I188
+***********************************************************************/
+int g2i188(HWND hWnd)
+{
+extern FILE *fdatei;
+
+extern FR_INT4 LANG;
+
+extern FR_INT4AY ifrei;
+
+extern FR_INT4 ndim,nkp,nfg,ipflag,iwarn,izeile,ifnii1;
+
+double x,y,z,xalt,yalt,zalt;
+
+FR_INT4 ixnull=0,iynull=0,iznull=0,ixgleich=0,iygleich=0,izgleich=0;
+FR_INT4 i,iknot,ifreisum=0,iwarnalt;
+
+int ier;
+int imess;
+
+char *cresult;
+char cline[256], cmess[1024], chead[12];
+                           
+/**********************************************************************
+* Header vorbelegen
+**********************************************************************/
+if(ifnii1 == 1)
+  strcpy(chead,"Z88NI.TXT");
+else
+  strcpy(chead,"Z88I1.TXT");  
+                           
+/**********************************************************************
+* Werte vorbelegen
+**********************************************************************/
+izeile  = 1;
+iwarnalt= iwarn;
+        
+/**********************************************************************
+* 2 & 3-dimensional: Schleife
+**********************************************************************/
+for(i = 1;i <= nkp;i++)                          /* 40 */
+  {
+  izeile++;    
+  if(i > 1)
+    {
+    xalt= x;
+    yalt= y;
+    zalt= z;
+    }
+
+  cresult= fgets(cline,256,fdatei);
+  if(!cresult)
+    {
+    erif88(hWnd,izeile);
+    return(2);
+    }
+
+/*---------------------------------------------------------------------
+* Schreibfehler ?
+*--------------------------------------------------------------------*/ 
+  if(ndim == 2)
+    {          
+    ier= sscanf(cline,"%ld %ld %lg %lg",&iknot,&ifrei[i],&x,&y);
+    if(ier != 4) 
+      {
+      if(LANG == 1) sprintf(cmess,
+    "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+    "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+  else
+    {          
+    ier= sscanf(cline,"%ld %ld %lg %lg %lg",
+    &iknot,&ifrei[i],&x,&y,&z);
+    if(ier != 5) 
+      {
+      if(LANG == 1) sprintf(cmess,
+    "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+    "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+  ifreisum+= ifrei[i];
+          
+/*---------------------------------------------------------------------
+* sichern der alten Werte; Sonderfall i= 1 
+*--------------------------------------------------------------------*/ 
+  if(i == 1)
+    {
+    xalt= x;
+    yalt= y;
+    zalt= z;
+    }
+
+/*---------------------------------------------------------------------
+* Knotennummer ?
+*--------------------------------------------------------------------*/ 
+  if(iknot != i)
+    {
+    if(LANG == 1) sprintf(cmess,"%s\nKnotennummer falsch\n\
+1.Wert in Zeile %ld ueberpruefen",cline,izeile);
+
+    if(LANG == 2) sprintf(cmess,"%s\nnode number wrong\n\
+check 1st entry in line %ld",cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*---------------------------------------------------------------------
+* Freiheitsgrade 2,3 oder 6 ?
+*--------------------------------------------------------------------*/ 
+  if(!(ifrei[i] == 2 || ifrei[i] == 3 || ifrei[i] == 6))
+    {       
+    if(LANG == 1) sprintf(cmess,
+"%s\nAnzahl Freiheitsgrade nicht 2,3 oder 6\n\
+2.Wert in Zeile %ld ueberpruefen",cline,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nnumber of DOF nicht 2,3 oder 6\n\
+check 2nd entry in line %ld",cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*---------------------------------------------------------------------
+* Freiheitsgrade nicht 3 bei gesetztem Plattenflag ?
+*--------------------------------------------------------------------*/ 
+  if(ipflag != 0 && ifrei[i] != 3 )
+    {       
+    if(LANG == 1) sprintf(cmess,
+"%s\nPlatte: Anzahl Freiheitsgrade nicht 3\n\
+2.Wert in Zeile %ld ueberpruefen\n\
+8.Wert (IPFLAG) in Zeile 1 ueberpruefen",cline,izeile);
+
+    if(LANG == 2)sprintf(cmess,
+"%s\nPlate: number of DOF not 3\n\
+check 2nd entry in line %ld\n\
+check 8th entry (IPFLAG)in line 1",cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*---------------------------------------------------------------------
+* x ?
+*--------------------------------------------------------------------*/ 
+  if(fabs(x) < 1e-20) ixnull++;
+  if(xalt == x)       ixgleich++;
+
+/*---------------------------------------------------------------------
+* y ?
+*--------------------------------------------------------------------*/ 
+  if(fabs(y) < 1e-20) iynull++;
+  if(yalt == y)       iygleich++;
+
+/*---------------------------------------------------------------------
+* z ?
+*--------------------------------------------------------------------*/ 
+  if(ndim == 3)
+    {
+    if(fabs(z) < 1e-20) iznull++;
+    if(zalt == z)       izgleich++;
+    }
+
+  }                                              /* e 40 */
+
+
+/**********************************************************************
+* Summe Freiheitsgrade o.k. ?
+**********************************************************************/
+if(ifreisum != nfg)
+  {
+  if(LANG == 1) sprintf(cmess,"Summe Freiheitsgrade nicht korrekt\n\
+Im 2.Eingabeblock ist sie %ld, in Zeile 1 ist sie jedoch %ld\n\
+4.Wert in Zeile 1 ueberpruefen",ifreisum,nfg);
+
+  if(LANG == 2) sprintf(cmess,"total number of DOF not correct\n\
+in 2. input group it is %ld, but in line 1 it is %ld\n\
+check 4th entry in line 1",ifreisum,nfg);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+/**********************************************************************
+* irgendetwas ueber die Koordinaten faul ?
+**********************************************************************/
+if(ixnull == nkp)
+  {
+  if(LANG == 1) sprintf(cmess,
+"%s\nAlle X-Werte nahezu oder gleich 0 ! \
+X-Werte der Knotenkoordinaten ueberpruefen",cline);
+
+  if(LANG == 2) sprintf(cmess,
+"%s\nall X- values about or equal 0 ! \
+check X- values of node coordinates",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+if(iynull == nkp)
+  {
+  if(LANG == 1) sprintf(cmess,
+"%s\nAlle Y-Werte nahezu oder gleich 0 ! \
+Y-Werte der Knotenkoordinaten ueberpruefen\n\
+Nur fuer Elemente Nr.5, 9 und 13 sinnvoll ..verdaechtig",cline);
+
+  if(LANG == 2) sprintf(cmess,
+"%s\nall Y- values about or equal 0 ! \
+check Y- values of node coordinates\n\
+only useful for elements no.5, 9 and 13 ..suspicious",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+  iwarn++;
+  }
+
+if(ndim == 3)
+  {
+  if(iznull == nkp)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nAlle Z-Werte nahezu oder gleich 0 ! \
+Z-Werte der Knotenkoordinaten ueberpruefen\n\
+Nur fuer Elemente Nr.5, 9 und 13 sinnvoll ..verdaechtig",cline);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nall Z- values about or equal 0 ! \
+check Z- values of node coordinates\n\
+only useful for elements no.5, 9 and 13 ..suspicious",cline);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+    iwarn++;
+    }
+  }      
+          
+if(ixgleich == nkp)
+  {
+  if(LANG == 1) sprintf(cmess,
+"%s\nAlle X-Werte identisch ! \
+X-Werte der Knotenkoordinaten ueberpruefen",cline);
+
+  if(LANG == 2) sprintf(cmess,
+"%s\nall X- values identical ! \
+check X- values of node coordinates",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+if(iygleich == nkp)
+  {
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nAlle Y-Werte identisch ! \
+Y-Werte der Knotenkoordinaten ueberpruefen\n\
+Nur fuer Elemente Nr.5, 9 und 13 sinnvoll ..verdaechtig",cline);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nall Y- values identical ! \
+check Y- values of node coordinates\n\
+only useful for elements no.5, 9 and 13 ..suspicious",cline);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+    iwarn++;
+    }
+  }
+
+if(ndim == 3)
+  {
+  if(izgleich == nkp)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nAlle Z-Werte identisch ! \
+Z-Werte der Knotenkoordinaten ueberpruefen\n\
+Nur fuer Elemente Nr.5, 9 und 13 sinnvoll ..verdaechtig",cline);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nall Z- values identical ! \
+check Z- values of node coordinates\n\
+only useful for elements no.5, 9 and 13 ..suspicious",cline);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+    iwarn++;
+    }
+  }      
+          
+/*----------------------------------------------------------------------
+* ggf. warnen
+*---------------------------------------------------------------------*/
+if(iwarn > iwarnalt)
+  {
+  if(LANG == 1) strcpy(cmess,"Weiterchecken ?");
+  if(LANG == 2) strcpy(cmess,"continue with check ?");
+  imess= MessageBox(NULL,cmess,chead,MB_YESNO | MB_ICONQUESTION);
+  if(imess == IDNO)  return(1);
+  }
+         
+/**********************************************************************
+* Normales Ende
+**********************************************************************/
+return(0);
+}
+@

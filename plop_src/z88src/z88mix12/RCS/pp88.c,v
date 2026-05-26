@@ -1,0 +1,552 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  pp88
+*  23.7.2002 Rieg
+***********************************************************************/
+
+/*----------------------------------------------------------------------
+* WindowsNT und 95
+*---------------------------------------------------------------------*/
+#ifdef FR_WIN95
+#include <z88p.h>
+#include <stdlib.h>  /* ltoa */
+#include <stdio.h>   /* fprintf */
+#endif
+
+/*----------------------------------------------------------------------
+* UNIX
+*---------------------------------------------------------------------*/
+#ifdef FR_UNIX
+#include <z88p.h>
+#include <stdlib.h>  /* ltoa */
+#include <stdio.h>   /* fprintf */
+#endif
+
+#define MAXPA 21
+
+/***********************************************************************
+* Function pp88
+***********************************************************************/
+int pp88(void)
+{
+extern FILE *f2;
+
+extern FR_INT4AY ityp;
+extern FR_INT4AY koffs;
+extern FR_INT4AY koi;
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp,ne;
+
+extern int iflabe,iztogg,ifverf,ifstala;
+
+FR_INT4 lx[MAXPA],ly[MAXPA];        
+FR_INT4 ipxmin,ipxmax,ipymin,ipymax,ioffp,ioffr,ix,iy;
+FR_INT4 i,k;
+
+char ct= 0x003;
+ 
+/***********************************************************************
+*  festlegen der scale-faktoren
+***********************************************************************/
+ipxmin=  250;
+ipxmax=10250;
+ipymin=  279;
+ipymax= 7479; 
+       
+ioffp=  1100;
+ioffr=   100;
+        
+/*********************************************************************** 
+*  unterscheide unverformte & verformte struktur
+***********************************************************************/
+if(ifverf== IDM_UNVERFORMT)
+  fprintf(f2,"IN;SC%ld,%ld,%ld,%ld;SP1;SI0.19,0.3;\n",
+  ipxmin,ipxmax,ipymin,ipymax);
+else
+  fprintf(f2,"IN;SC%ld,%ld,%ld,%ld;SP2;SI0.19,0.3;\n",
+  ipxmin,ipxmax,ipymin,ipymax);
+
+/*********************************************************************** 
+*  rahmen
+***********************************************************************/
+fprintf(f2,"PU;PA%ld,%ld;PD;\n",ipxmin,ipymin);
+fprintf(f2,"PA%ld,%ld;\n",ipxmin,ipymax);
+fprintf(f2,"PA%ld,%ld;\n",ipxmax,ipymax);
+fprintf(f2,"PA%ld,%ld;\n",ipxmax,ipymin);
+fprintf(f2,"PA%ld,%ld;PU;\n",ipxmin,ipymin);
+
+/*********************************************************************** 
+*  plotflaeche verkleinern
+***********************************************************************/
+if(iztogg == IDM_NOSHOWSPANN)
+  {
+  ipxmin= ipxmin+ioffr;
+  ipxmax= ipxmax-ioffr;
+  ipymin= ipymin+ioffr;
+  ipymax= ipymax-ioffr;
+  }
+else
+  {
+  ipxmin= ipxmin+ioffp;
+  ipxmax= ipxmax-ioffr;
+  ipymin= ipymin+ioffr;
+  ipymax= ipymax-ioffr;
+  }
+                  
+/***********************************************************************
+*  schleife ueber alle elemente
+***********************************************************************/
+for(k= 1; k <= ne; k++)
+  {
+
+/*----------------------------------------------------------------------
+*  8 punkte fuer 8-k hexaeder
+*---------------------------------------------------------------------*/
+  if(ityp[k]== 1)
+    {
+    for(i= 1; i <= 8; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",
+    lx[2],ly[2],lx[3],ly[3],lx[4],ly[4],lx[1],ly[1],lx[5],ly[5]);
+
+    fprintf(f2,"PA%ld,%ld;PD;PA%ld,%ld;PU;PA%ld,%ld;PD;\
+PA%ld,%ld;PU;PA%ld,%ld;PD;\n",lx[2],ly[2],lx[6],ly[6],lx[3],ly[3],
+    lx[7],ly[7],lx[4],ly[4]);
+
+    fprintf(f2,"PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",
+    lx[8],ly[8],lx[5],ly[5],lx[6],ly[6],lx[7],ly[7],lx[8],ly[8]);
+          
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[7])/2);
+      iy= ( (ly[1]+ly[7])/2)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  2 punkte fuer raeuml stab,ebenen stab, balken, welle & ebener balk
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 2 || ityp[k]== 4 || ityp[k]== 5 ||
+          ityp[k]== 9 || ityp[k]== 13)
+    {
+    for(i= 1; i <= 2; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld;PU;\n",lx[2],ly[2],lx[1],ly[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[2])/2);
+      iy= ( (ly[1]+ly[2])/2)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  6 punkte fuer 6-k scheibe + torus + platte
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 3 || ityp[k]== 14 || ityp[k]== 15 || ityp[k]== 18)
+    {
+    for(i= 1; i <= 6; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",
+    lx[4],ly[4],lx[2],ly[2],lx[5],ly[5],lx[3],ly[3],lx[6],ly[6],lx[1],ly[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[2]+lx[3])/3);
+      iy= ( (ly[1]+ly[2]+ly[3])/3)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  3 punkte fuer 3-k torus
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 6)
+    {
+    for(i= 1; i <= 3; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",
+    lx[2],ly[2],lx[3],ly[3],lx[1],ly[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[2]+lx[3])/3);
+      iy= ( (ly[1]+ly[2]+ly[3])/3)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  8 punkte fuer 8-k serendipity-scheibe & -torus und platte 20
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 7 || ityp[k]== 8 || ityp[k]== 20)
+    {
+    for(i= 1; i <= 8; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,\
+%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",lx[5],ly[5],lx[2],ly[2],
+    lx[6],ly[6],lx[3],ly[3],lx[7],ly[7],lx[4],ly[4],lx[8],ly[8],lx[1],ly[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[3])/2);
+      iy= ( (ly[1]+ly[3])/2)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  20 punkte fuer 20-k hexaeder
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 10)
+    {
+    for(i= 1; i <= 20; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+/*======================================================================
+*  obere ebene
+*=====================================================================*/
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,\
+%ld,%ld,%ld,%ld;PU;\n",lx[9],ly[9],lx[2],ly[2],lx[10],ly[10],lx[3],
+    ly[3],lx[11],ly[11],lx[4],ly[4],lx[12],ly[12],lx[1],ly[1]);
+
+/*======================================================================
+*  untere ebene
+*=====================================================================*/
+    fprintf(f2,"PA%ld,%ld;PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,\
+%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",lx[5],ly[5],lx[13],ly[13],
+    lx[6],ly[6],lx[14],ly[14],lx[7],ly[7],lx[15],ly[15],lx[8],ly[8],
+    lx[16],ly[16],lx[5],ly[5]);
+
+/*======================================================================
+*  mittlere ebene
+*=====================================================================*/
+    fprintf(f2,"PA%ld,%ld;PD;PA%ld,%ld,%ld,%ld;PU;\n",
+    lx[1],ly[1],lx[17],ly[17],lx[5],ly[5]);
+    fprintf(f2,"PA%ld,%ld;PD;PA%ld,%ld,%ld,%ld;PU;\n",
+    lx[2],ly[2],lx[18],ly[18],lx[6],ly[6]);
+    fprintf(f2,"PA%ld,%ld;PD;PA%ld,%ld,%ld,%ld;PU;\n",
+    lx[3],ly[3],lx[19],ly[19],lx[7],ly[7]);
+    fprintf(f2,"PA%ld,%ld;PD;PA%ld,%ld,%ld,%ld;PU;\n",
+    lx[4],ly[4],lx[20],ly[20],lx[8],ly[8]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[7])/2);
+      iy= ( (ly[1]+ly[7])/2)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  12 punkte fuer 12-k serendipity-scheibe & -torus
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 11 || ityp[k]== 12)
+    {
+    for(i= 1; i <= 12; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,\
+%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",lx[5],ly[5],
+    lx[6],ly[6],lx[2],ly[2],lx[7],ly[7],lx[8],ly[8],lx[3],ly[3],lx[9],ly[9],
+    lx[10],ly[10],lx[4],ly[4],lx[11],ly[11],lx[12],ly[12],lx[1],ly[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[3])/2);
+      iy= ( (ly[1]+ly[3])/2)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  12 punkte fuer 16-k lagrange platte
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 19)
+    {
+    for(i= 1; i <= 16; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+           
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,\
+%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",lx[2],ly[2],
+    lx[3],ly[3],lx[4],ly[4],lx[8],ly[8],lx[12],ly[12],lx[16],ly[16],
+    lx[15],ly[15],
+    lx[14],ly[14],lx[13],ly[13],lx[9],ly[9],lx[5],ly[5],lx[1],ly[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[16])/2);
+      iy= ( (ly[1]+ly[16])/2)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  10 punkte fuer 10-k tetraeder
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 16)
+    {
+    for(i= 1; i <= 10; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    /* Grundlinie 1-5-2-6-3-7-1 */
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",
+    lx[5],ly[5],lx[2],ly[2],
+    lx[6],ly[6],lx[3],ly[3],
+    lx[7],ly[7],lx[1],ly[1]);
+    
+    /* Linien 1-10-4-9-3 */
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",
+    lx[10],ly[10],lx[4],ly[4],
+    lx[ 9],ly[ 9],lx[3],ly[3]);
+
+    /* Linie 2-8-4 */
+    fprintf(f2,"PA%ld,%ld;\n",lx[2],ly[2]);
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld;PU;\n",
+    lx[8],ly[8],lx[4],ly[4]);
+    
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[2]+lx[3]+lx[4])/4);
+      iy= ( (ly[1]+ly[2]+ly[3]+ly[4])/4)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  4 punkte fuer 4-k tetraeder
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 17)
+    {
+    for(i= 1; i <= 4; i++)
+      {
+      lx[i]= kx[koi[koffs[k]+i-1]];
+      ly[i]= ky[koi[koffs[k]+i-1]];
+      if(lx[i]<ipxmin || lx[i]>ipxmax) goto L300;
+      if(ly[i]<ipymin || ly[i]>ipymax) goto L300;
+      }
+
+    /* Grundlinie 1-2-3-1 */
+    fprintf(f2,"PA%ld,%ld;\n",lx[1],ly[1]);
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld,%ld,%ld;PU;\n",
+    lx[2],ly[2],lx[3],ly[3],lx[1],ly[1]);
+    
+    /* Linien 1-4-3 */
+    fprintf(f2,"PD;PA%ld,%ld,%ld,%ld;PU;\n",
+    lx[4],ly[4],lx[3],ly[3]);
+
+    /* Linie 2-4 */
+    fprintf(f2,"PA%ld,%ld;\n",lx[2],ly[2]);
+    fprintf(f2,"PD;PA%ld,%ld;PU;\n",lx[4],ly[4]);
+    
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      ix= ( (lx[1]+lx[2]+lx[3]+lx[4])/4);
+      iy= ( (ly[1]+ly[2]+ly[3]+ly[4])/4)+50;
+      fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,k,ct);
+      }
+    } 
+
+/*----------------------------------------------------------------------
+*  ende der grossen elementschleife
+*---------------------------------------------------------------------*/
+  L300:;
+  }
+  
+/***********************************************************************
+*  ggf knotennummern plotten
+***********************************************************************/ 
+if((iflabe== IDM_KNOTEN || iflabe== IDM_ALLES) &&
+    ifstala == ID_ENABLELABELS)
+  {
+  fprintf(f2,"SI0.125,0.2;PU;\n");
+  fprintf(f2,"PA250,279;LB-%c;\n",ct);
+
+  for(i= 1; i <= nkp; i++)
+    {
+    ix= kx[i]+50;
+    iy= ky[i]+50;
+    if(ix<ipxmin || ix>ipxmax) continue;
+    if(iy<ipymin || iy>ipymax) continue;
+
+    fprintf(f2,"PA%ld,%ld;LB%ld%c;\n",ix,iy,i,ct);
+    }
+  }
+
+/**********************************************************************/
+if(iztogg == IDM_NOSHOWSPANN)
+  fprintf(f2,"PA250,279;LB*%c;PU;\n",ct);
+        
+return 0;
+}
+@

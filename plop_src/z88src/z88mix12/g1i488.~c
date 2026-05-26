@@ -1,0 +1,161 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/**********************************************************************
+* Function g1i488 prueft Z88I4.TXT
+* 9.09.2002 Rieg 
+**********************************************************************/
+#ifdef FR_WIN95
+#include <z88v.h>
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+#endif
+
+/***********************************************************************
+* Functions
+***********************************************************************/
+void erif88(HWND hWnd,long izeile);
+
+/***********************************************************************
+* Start G1I488
+***********************************************************************/
+int g1i488(HWND hWnd)
+{
+extern FILE *fdatei;
+
+extern FR_INT4 LANG;
+
+extern FR_INT4 izeile;
+
+FR_DOUBLE eps,rp;
+FR_INT4 maxit;
+
+int ier;
+
+char *cresult;
+char cline[256],cmess[1024], chead[12];
+
+/**********************************************************************
+* Header vorbelegen
+**********************************************************************/
+strcpy(chead,"Z88I4.TXT");
+
+/**********************************************************************
+* Checken der 1.Zeile
+**********************************************************************/
+izeile= 1; 
+
+cresult= fgets(cline,256,fdatei);
+if(!cresult)
+  {
+  erif88(hWnd,izeile);
+  return(2);
+  }
+
+ier= sscanf(cline,"%ld %lf %lf",&maxit,&eps,&rp);
+if(ier != 3) 
+  {
+  if(LANG == 1) sprintf(cmess,
+  "%s\nSchreibfehler oder fehlende Daten in Zeile 1 entdeckt",cline);
+
+  if(LANG == 2) sprintf(cmess,
+  "%s\ntyping error  or missing entries in line 1 detected",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+        
+/*----------------------------------------------------------------------
+* logische Pruefungen
+*---------------------------------------------------------------------*/
+if(maxit <= 0)
+  {
+  if(LANG == 1) sprintf(cmess,
+    "%s\nFalsche Anzahl Iterationen fuer Z88I2:\n\
+MAXIT muss groesser 0 sein\n\
+Wie waer's mit 1000 oder 10000 ?\n\
+1.Wert in Zeile 1 ueberpruefen",cline);
+
+  if(LANG == 2) sprintf(cmess,
+    "%s\nwrong maximal number of iterations for Z88I2\n\
+MAXIT has to be larger than 0\n\
+How about 1000 or 10000 ?\n\
+check 1st entry in line 1",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+if(eps <= 0)
+  {
+  if(LANG == 1) sprintf(cmess,"%s\nEPSILON fuer Z88I2 unzulaessig\n\
+EPSILON muss klein, aber groesser 0 sein\n\
+wie waer's mit 0.0000001 oder 1e-10 ?\n\
+2.Wert in Zeile 1 ueberpruefen",cline);
+
+  if(LANG == 2) sprintf(cmess,"%s\nEPSILON invalid\n\
+EPSILON should be small but > 0\n\
+How about 0.0000001 or 1e-10 ?\n\
+check 2nd entry in line 1",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+if(rp < 0)
+  {
+  if(LANG == 1) sprintf(cmess,
+"%s\nRP nicht in Ordnung\n\
+RP hat folgende Bedeutung:\n\
+Z88I2 mit SIC : RP ist der Shift- Parameter, 0 <= RP <= 1\n\
+Z88I2 mit SOR : RP ist der Relax- Parameter, 0 <= RP <= 2\n\
+3.Wert in Zeile 1 ueberpruefen",cline);
+
+  if(LANG == 2) sprintf(cmess,
+"%s\nRP invalid\n\
+RP has the following meaning:\n\
+Z88I2 with SIC : RP is the Shift paramater, 0 <= RP <= 1\n\
+Z88I2 with SOR : RP is the Relax parameter, 0 <= RP <= 2\n\
+check 3rd entry in line 1",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+return(0);
+}
+

@@ -1,0 +1,286 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  Compilerunit pc88 enthaelt:
+*  pu2b88
+*  pu3b88
+*  pv2b88
+*  pv3b88
+*
+*  4.10.2005 Rieg
+***********************************************************************/
+
+/*----------------------------------------------------------------------
+* Windows
+*---------------------------------------------------------------------*/
+#ifdef FR_WIN95
+#include <z88p.h>
+#endif
+
+/*----------------------------------------------------------------------
+* UNIX
+*---------------------------------------------------------------------*/
+#ifdef FR_UNIX
+#include <z88p.h>
+#endif
+
+/***********************************************************************
+* Function pu2b88
+***********************************************************************/
+int pu2b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+
+extern FR_DOUBLE facx,facy,facz,cx,cy,cz;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+extern int ifansi;
+        
+FR_INT4 i;
+
+if(ifansi== IDM_XY)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (FR_INT4) (36.232 * (((x[i] -cx) *facx) + 138.) + 250.);
+    ky[i]= (FR_INT4) (36.    * (((y[i] -cy) *facy) + 100.) + 279.);
+    }
+  }
+else if(ifansi== IDM_XZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (FR_INT4) (36.232 * (((x[i] -cx) *facx) + 138.) + 250.);
+    ky[i]= (FR_INT4) (36.    * (((z[i] -cz) *facz) + 100.) + 279.);
+    }
+  }
+else if(ifansi== IDM_YZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (FR_INT4) (36.232 * (((y[i] -cy) *facy) + 138.) + 250.);
+    ky[i]= (FR_INT4) (36.    * (((z[i] -cz) *facz) + 100.) + 279.);
+    }
+  }
+  
+return 0;
+}
+
+/***********************************************************************
+* Function pu3b88
+***********************************************************************/
+int pu3b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+
+extern FR_DOUBLE facx,facy,facz,cx,cy,cz,rotx,roty,rotz;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+FR_DOUBLE gx,gy,gz,hx,hy,hz,wx,wy,wz,sa,sb,sc,sd,se,sf,sg,sh,si,fpi;
+
+FR_INT4 i;
+
+fpi= 0.0174533;
+        
+wx= rotx*fpi;
+wy= roty*fpi;
+wz= rotz*fpi;
+        
+sa= FR_COS(wy) * FR_COS(wz);
+sb= FR_COS(wy) * FR_SIN(wz);
+sc= -FR_SIN(wy);
+sd= FR_SIN(wx) * FR_SIN(wy) * FR_COS(wz) - FR_COS(wx) * FR_SIN(wz);
+se= FR_SIN(wx) * FR_SIN(wy) * FR_SIN(wz) + FR_COS(wx) * FR_COS(wz);
+sf= FR_SIN(wx) * FR_COS(wy);
+sg= FR_COS(wx) * FR_SIN(wy) * FR_COS(wz) + FR_SIN(wx) * FR_SIN(wz);
+sh= FR_COS(wx) * FR_SIN(wy) * FR_SIN(wz) - FR_SIN(wx) * FR_COS(wz);
+si= FR_COS(wx) * FR_COS(wy);
+
+for(i= 1; i <= nkp; i++)
+  {
+  gx= (x[i] - cx) * facx;
+  gy= (y[i] - cy) * facy;
+  gz= (z[i] - cz) * facz;
+  hx= gx * sa + gy * sb + gz * sc;
+  hy= gx * sd + gy * se + gz * sf;
+  hz= gx * sg + gy * sh + gz * si;
+  kx[i]= (FR_INT4) (36.232 * ((hx - hy) * 0.866      + 138.) + 250.);
+  ky[i]= (FR_INT4) (36.    * ((hx + hy) * 0.500 + hz + 100.) + 279.);
+  }
+return 0;
+}
+
+/******************* ab hier verformt *********************************/
+
+/***********************************************************************
+* Function pv2b88
+***********************************************************************/
+int pv2b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+extern FR_DOUBLEAY ux;
+extern FR_DOUBLEAY uy;
+extern FR_DOUBLEAY uz;
+
+extern FR_DOUBLE facx,facy,facz,cx,cy,cz,fux,fuy,fuz;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+extern int ifansi;
+        
+FR_INT4 i;
+
+if(ifansi== IDM_XY)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (FR_INT4) (36.232 * ((((x[i] +fux* ux[i])-cx) *facx) +138.) + 250.);
+    ky[i]= (FR_INT4) (36.    * ((((y[i] +fuy* uy[i])-cy) *facy) +100.) + 279.);
+    }
+  }
+else if(ifansi== IDM_XZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (FR_INT4) (36.232 * ((((x[i] +fux* ux[i])-cx) *facx) +138.) + 250.);
+    ky[i]= (FR_INT4) (36.    * ((((z[i] +fuz* uz[i])-cz) *facz) +100.) + 279.);
+    }
+  }
+else if(ifansi== IDM_YZ)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    kx[i]= (FR_INT4) (36.232 * ((((y[i] +fuy* uy[i])-cy) *facy) +138.) + 250.);
+    ky[i]= (FR_INT4) (36.    * ((((z[i] +fuz* uz[i])-cz) *facz) +100.) + 279.);
+    }
+  }
+
+return 0;
+}
+
+/***********************************************************************
+* Function pv3b88
+***********************************************************************/
+int pv3b88(void)
+{
+extern FR_DOUBLEAY x;
+extern FR_DOUBLEAY y;
+extern FR_DOUBLEAY z;
+extern FR_DOUBLEAY ux;
+extern FR_DOUBLEAY uy;
+extern FR_DOUBLEAY uz;
+
+extern FR_DOUBLE facx,facy,facz,cx,cy,cz,rotx,roty,rotz,fux,fuy,fuz;
+
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 nkp;
+
+FR_DOUBLE gx,gy,gz,hx,hy,hz,wx,wy,wz,sa,sb,sc,sd,se,sf,sg,sh,si,fpi;
+        
+FR_INT4 i;
+
+fpi= 0.0174533;
+        
+wx= rotx*fpi;
+wy= roty*fpi;
+wz= rotz*fpi;
+        
+sa= FR_COS(wy) * FR_COS(wz);
+sb= FR_COS(wy) * FR_SIN(wz);
+sc= -FR_SIN(wy);
+sd= FR_SIN(wx) * FR_SIN(wy) * FR_COS(wz) - FR_COS(wx) * FR_SIN(wz);
+se= FR_SIN(wx) * FR_SIN(wy) * FR_SIN(wz) + FR_COS(wx) * FR_COS(wz);
+sf= FR_SIN(wx) * FR_COS(wy);
+sg= FR_COS(wx) * FR_SIN(wy) * FR_COS(wz) + FR_SIN(wx) * FR_SIN(wz);
+sh= FR_COS(wx) * FR_SIN(wy) * FR_SIN(wz) - FR_SIN(wx) * FR_COS(wz);
+si= FR_COS(wx) * FR_COS(wy);
+
+for(i= 1; i <= nkp; i++)
+  {
+  gx= ((x[i] + fux * ux[i]) - cx) * facx;
+  gy= ((y[i] + fuy * uy[i]) - cy) * facy;
+  gz= ((z[i] + fuz * uz[i]) - cz) * facz;
+  hx= gx * sa + gy * sb + gz * sc;
+  hy= gx * sd + gy * se + gz * sf;
+  hz= gx * sg + gy * sh + gz * si;
+  kx[i]= (FR_INT4) (36.232 * ((hx - hy) * 0.866      + 138.) + 250.);
+  ky[i]= (FR_INT4) (36.    * ((hx + hy) * 0.500 + hz + 100.) + 279.);
+  }
+return 0;
+}
+@

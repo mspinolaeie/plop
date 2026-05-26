@@ -1,0 +1,232 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* z88f.h, fuer UNIX und Windows
+* 4.10.2005 Rieg
+***********************************************************************/
+
+/***********************************************************************
+* Datentypen Windows und UNIX 
+***********************************************************************/
+#define FR_INT4AY long *               /* Pointer auf long        */
+#define FR_INT4 long                   /* long                    */
+#define FR_CALLOC calloc               /* calloc */
+#define FR_SIZERW size_t               /* Size fuer fread, fwrite */
+
+#ifdef FR_XDOUB
+#define FR_SQRT sqrt                   /* sqrt                    */
+#define FR_POW pow                     /* pow                     */
+#define FR_FABS fabs                   /* fabs                    */
+#define FR_SIN sin                     /* sin                     */
+#define FR_COS cos                     /* cos                     */
+#define FR_DOUBLEAY double *           /* Pointer auf double      */
+#define FR_DOUBLE double               /* double                  */
+#endif
+
+#ifdef FR_XQUAD
+#define FR_SQRT sqrtl                  /* sqrtl                   */
+#define FR_POW powl                    /* powl                    */
+#define FR_FABS fabsl                  /* fabsl                   */
+#define FR_SIN sinl                    /* sinl                    */
+#define FR_COS cosl                    /* cosl                    */
+#define FR_DOUBLEAY long double *      /* Pointer auf long double */
+#define FR_DOUBLE long double          /* long double             */
+#endif
+
+#include "z88math.h"
+
+/***********************************************************************
+* Daten
+***********************************************************************/
+#define ICO_Z88F                        10
+#define CUR_Z88F                        20
+#define BMP_Z88F                        30
+
+/***********************************************************************
+* Menue-IDs
+***********************************************************************/
+#define IDM_WER                        100
+#define IDM_XIT                        110
+#define IDM_COMPAKTMODE                120
+#define IDM_TESTMODE                   150
+#define IDM_GO                         160
+
+/***********************************************************************
+* Toolbar-IDs
+***********************************************************************/
+#define ITC_GO                         200
+#define ITC_HELP                       210
+#define ITC_COMPAKTMODE                220
+#define ITC_TESTMODE                   250
+
+/***********************************************************************
+* Alerts
+***********************************************************************/
+#define AL_NOLOG 3000                  /* kein Z88F.LOG */ 
+#define AL_NODYN 3010                  /* kein Z88.DYN */
+#define AL_WRONGDYN 3020               /* Fehler in Z88.DYN */
+#define AL_NOMEMY 3030                 /* nicht genug Memory */
+#define AL_NOI1 3040                   /* Fehler Oeffnen z88i1.txt */
+#define AL_NOI2 3050                   /* Fehler Oeffnen z88i2.txt */
+#define AL_NOI5 3060                   /* Fehler Oeffnen z88i5.txt */
+#define AL_NO1Y 3070                   /* Fehler Oeffnen z88o1.bny */
+#define AL_NO3Y 3090                   /* Fehler Oeffnen z88o3.bny */
+#define AL_NOO0 3100                   /* Fehler Oeffnen z88o0.txt */
+#define AL_NOO1 3110                   /* Fehler Oeffnen z88o1.txt */
+#define AL_NOO2 3120                   /* Fehler Oeffnen z88o2.txt */
+#define AL_WRONDIM 3130                /* NDIM falsch */
+#define AL_EXMAXK 3140                 /* zuviele Knoten */
+#define AL_EXMAXE 3150                 /* zuviele Elemente */
+#define AL_EXMAXNFG 3160               /* zuviele Freiheitsgrade */
+#define AL_EXMAXNEG 3170               /* zuviele E-Gesetze */
+#define AL_EXMAXPR 3175                /* zuviele Elemente mit Druck */
+#define AL_WROKFLAG 3180               /* KFLAG falsch */
+#define AL_WROETYP 3190                /* falscher Elementtyp */
+#define AL_EXGS 3200                   /* MAXGS exhausted */
+#define AL_EXKOI 3210                  /* MAXKOI exhausted */
+#define AL_JACNEG 3230                 /* Jacobi-Determinate null/negativ */
+#define AL_JACLOA 3235                 /* Jacobi-Determinate null/negativ */
+#define AL_DIAGNULL 3240               /* Diagonalele null/negativ */
+#define AL_WROCFLAG 3250               /* Steuerflag Z88F falsch */
+#define AL_NOCFLAG 3260                /* kein Steuerflag Z88F */
+
+/***********************************************************************
+* Texte
+***********************************************************************/
+#define TX_REAI1 3500                  /* Z88I1.TXT einlesen */
+#define TX_REAI2 3510                  /* Z88I2.TXT einlesen */
+#define TX_REAI5 3515                  /* Z88I5.TXT einlesen */
+#define TX_WRIO0 3520                  /* Z88O0.TXT beschreiben */
+#define TX_WRIO1 3530                  /* Z88O1.TXT beschreiben */
+#define TX_WRIO2 3540                  /* Z88O2.TXT beschreiben */
+#define TX_WRI1Y 3550                  /* Z88O1.BNY beschreiben */
+#define TX_WRI3Y 3570                  /* Z88O3.BNY beschreiben */
+#define TX_ELE 3580                    /* Element I */
+#define TX_KOOR 3590                   /* Koordinaten einlesen */
+#define TX_POLAR 3600                  /* Polarkoordinaten umr. */
+#define TX_KOIN 3610                   /* Koinzidenz einlesen */
+#define TX_EGES 3620                   /* E-Gesetze einlesen */
+#define TX_Z88A 3630                   /* Start Z88A */
+#define TX_FORMA 3640                  /* Formatieren */
+#define TX_GSERF 3650                  /* GS erfordert n */
+#define TX_KOIERF 3660                 /* KOI erfordert n */
+#define TX_Z88B 3670                   /* Start Z88B */
+#define TX_COMPI 3680                  /* Compilieren */
+#define TX_Z88CC 3690                  /* Start Z88CC */
+#define TX_ERBPA 3700                  /* Einarbeiten RB Pass I */
+#define TX_SCAL88 3710                 /* Start SCAL88 */
+#define TX_CHOY88 3720                 /* Start CHOY88 */
+#define TX_NFG 3730                    /* Anzahl nfg */
+#define TX_CHOJ 3740                   /* J = */
+#define TX_VORW 3750                   /* Vorwaertseinsetzen */
+#define TX_RUECKW 3760                 /* Rueckwaertseinsetzen */
+
+/***********************************************************************
+* LOGs
+***********************************************************************/
+#define LOG_BZ88 4000                  /* Beginn Z88 */
+#define LOG_OPENZ88DYN 4010            /* Oeffnen Z88.DYN */
+#define LOG_NODYN 4020                 /* kann Z88.DYN nicht oeffnen */
+#define LOG_WRONGDYN 4030              /* Z88.DYN nicht o.k. */
+#define LOG_MAXGS 4040                 /* MAXGS */
+#define LOG_MAXKOI 4050                /* MAXKOI */
+#define LOG_MAXK 4060                  /* MAXK */
+#define LOG_MAXE 4070                  /* MAXE */
+#define LOG_MAXNFG 4080                /* MAXNFG */
+#define LOG_MAXNEG 4090                /* MAXNEG */
+#define LOG_MAXESM 4100                /* MAXESM */
+#define LOG_MAXPR 4105                 /* MAXPR */
+#define LOG_OKDYN 4110                 /* Z88.DYN scheint o.k. zu sein */
+#define LOG_ALLOCMEMY 4120             /* Memory anlegen */
+#define LOG_ARRAYNOTOK 4130            /* Memory Kennung I nicht o.k. */
+#define LOG_ARRAYOK 4140               /* Memory Kennung I angelegt */
+#define LOG_SUMMEMY 4150               /* Memory angefordert */
+#define LOG_EXITDYN88F 4160            /* Verlassen DYN88F */
+#define LOG_BRI188 4170                /* Start RI188 */
+#define LOG_BRI588 4175                /* Start RI588 */
+#define LOG_NOI1 4180                  /* kein Z88I1.TXT */
+#define LOG_WRONGDIM 4200              /* ndim falsch */
+#define LOG_EXMAXK 4210                /* MAXK ueberschritten */
+#define LOG_EXMAXE 4220                /* MAXE ueberschritten */
+#define LOG_EXMAXNFG 4230              /* MAXNFG ueberschritten */
+#define LOG_EXMAXNEG 4240              /* MAXNEG ueberschritten */
+#define LOG_EXMAXPR 4245               /* MAXPR ueberschritten */
+#define LOG_WROKFLAG 4250              /* KFLAG falsch */
+#define LOG_KOOR 4260                  /* Einlesen Koordinaten */
+#define LOG_KOIN 4270                  /* Einlesen Koinzidenz */
+#define LOG_EGES 4280                  /* Einlesen E-Gesetze */
+#define LOG_EXITRI188 4290             /* Verlassen RI188 */
+#define LOG_BWRIA88F 4300              /* Start WRIA88F */
+#define LOG_NO1Y 4310                  /* kein Z88O1.BNY */
+#define LOG_NOO0 4320                  /* kein Z88O0.TXT */
+#define LOG_WRI1Y 4330                 /* Beschreiben Z88O1.BNY */
+#define LOG_WRIO0 4340                 /* Beschreiben Z88O0.TXT */
+#define LOG_GSERF 4350                 /* GS erforderlich */
+#define LOG_KOIERF 4360                /* KOI erforderlich */
+#define LOG_EXITWRIA88F 4370           /* Verlassen WRIA88F */
+#define LOG_Z88A 4380                  /* Start Z88A */
+#define LOG_FORMA 4390                 /* Formatieren */
+#define LOG_WROETYP 4400               /* falscher Elementtyp */
+#define LOG_EXITZ88A 4410              /* Verlassen Z88A */
+#define LOG_Z88B 4420                  /* Start Z88B */
+#define LOG_EXGS 4430                  /* MAXGS ueberschritten */
+#define LOG_EXKOI 4440                 /* MAXKOI ueberschritten */
+#define LOG_COMPI 4450                 /* Compilation */
+#define LOG_EXITZ88B 4470              /* Verlassen Z88B */
+#define LOG_Z88CC 4480                 /* Start Z88CC */
+#define LOG_NOI2 4490                  /* kein Z88I2.TXT */
+#define LOG_NOI5 4495                  /* kein Z88I5.TXT */
+#define LOG_NO3Y 4500                  /* kein Z88O3.BNY */
+#define LOG_NOO1 4510                  /* kein Z88O1.TXT */
+#define LOG_NOO2 4520                  /* kein Z88O2.TXT */
+#define LOG_REAI2 4530                 /* Einlesen Z88I2.TXT */
+#define LOG_WRIO1 4540                 /* Beschreiben Z88O1.TXT */
+#define LOG_ERBPA 4550                 /* Einarbeiten RB Pass I */
+#define LOG_SCAL88 4560                /* Start SCAL88 */
+#define LOG_CHOY88 4570                /* Start CHOY88 */
+#define LOG_WRI3Y 4580                 /* Beschreiben Z88O3.BNY */
+#define LOG_WRIO2 4590                 /* Beschreiben Z88O2.TXT */
+#define LOG_EXITZ88CC 4600             /* Verlassen Z88CC */
+#define LOG_VORW 4610                  /* Vorwaertseinsetzen */
+#define LOG_RUECKW 4620                /* Rueckwaertseinsetzen */
+#define LOG_DIAGNULL 4630              /* Diagonalelement <= 0 */
+#define LOG_JACNEG 4640                /* Jacobi- Determinate <= 0 */
+#define LOG_JACLOA 4645                /* Jacobi- Determinate <= 0 */
+#define LOG_CFLAGC 4650                /* ICFLAG = 1: /C */
+#define LOG_CFLAGT 4680                /* ICFLAG = 4: /T */
+
+
+

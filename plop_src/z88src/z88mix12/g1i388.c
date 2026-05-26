@@ -1,0 +1,182 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/**********************************************************************
+* Function g1i388 prueft Z88I3.TXT
+* 31.10.2002 Rieg 
+**********************************************************************/
+#ifdef FR_WIN95
+#include <z88v.h>
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+#endif
+
+/***********************************************************************
+* Functions
+***********************************************************************/
+void erif88(HWND hWnd,long izeile);
+
+/***********************************************************************
+* Start G1I388
+***********************************************************************/
+int g1i388(HWND hWnd)
+{
+extern FILE *fdatei;
+
+extern FR_INT4 LANG;
+
+extern FR_INT4 ispann,izeile;
+
+FR_INT4 nint,kflag,isflag;
+
+int ier;
+
+char *cresult;
+char cline[256],cmess[1024], chead[12];
+
+/**********************************************************************
+* Header vorbelegen
+**********************************************************************/
+strcpy(chead,"Z88I3.TXT");
+
+/**********************************************************************
+* File ueberhaupt notwendig ?
+**********************************************************************/
+if(ispann == 0)
+  {
+  if(LANG == 1) strcpy(cmess,
+"File Z88I3.TXT (Parameterfile Spannungen) ist \
+inhaltlich fuer das vorgesehene Eingabefile Z88I1.TXT nicht noetig. \
+Inhalt von Z88I3.TXT kann daher beliebig sein");          
+
+  if(LANG == 2) strcpy(cmess,
+"File Z88I3.TXT (stress flag file) is \
+of no importance for this general input file Z88I1.TXT. \
+contents of Z88I3.TXT can be arbitrary");          
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONINFORMATION);
+  return(0);
+  }
+
+/**********************************************************************
+* Checken der 1.Zeile
+**********************************************************************/
+izeile= 1; 
+
+cresult= fgets(cline,256,fdatei);
+if(!cresult)
+  {
+  erif88(hWnd,izeile);
+  return(2);
+  }
+
+ier= sscanf(cline,"%ld %ld %ld",&nint,&kflag,&isflag);
+if(ier != 3) 
+  {
+  if(LANG == 1) sprintf(cmess,
+  "%s\nSchreibfehler oder fehlende Daten in Zeile 1 entdeckt",cline);
+
+  if(LANG == 2) sprintf(cmess,
+  "%s\ntyping error  or missing entries in line 1 detected",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+        
+/*----------------------------------------------------------------------
+* logische Pruefungen
+*---------------------------------------------------------------------*/
+  if(!(nint == 0 || nint == 1 || nint == 2 || nint == 3 ||
+       nint == 4 || nint == 5 || nint == 7 || nint == 13))
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\nFalsche Integrationsordnung\n\
+Zulaessig fuer Elementtypen 2,3,4,5,6,9,13: 0\n\
+Zulaessig fuer Elementtypen 1,7,8,10,11,12,19,20: 1,2,3,4\n\
+Zulaessig fuer Elementtypen 14,15,18: 3,7,13\n\
+Zulaessig fuer Elementtypen 16,17: 1,4,5\n\
+1.Wert in Zeile 1 ueberpruefen",cline);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nwrong integration value\n\
+allowed values for element types 2,3,4,5,6,9,13: 0\n\
+allowed values for element types 1,7,8,10,11,12,19,20: 1,2,3,4\n\
+allowed values for element types 14,15,18: 3,7,13\n\
+allowed values for element types 16,17: 1,4,5\n\
+check 1st entry in line 1",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+if(kflag < 0 || kflag > 1)
+  {
+  if(LANG == 1) sprintf(cmess,"%s\nKFLAG unzulaessig\n\
+Zulaessig:\n0 = Standard-Spannungsrechung\n\
+1 = zusaetzlich Radial- und Tangentialsp.\n\
+2.Wert in Zeile 1 ueberpruefen",cline);
+
+  if(LANG == 2) sprintf(cmess,"%s\nKFLAG invalid\n\
+allowed:\n0 = computing standard stresses\n\
+1 = radial- and tangential stresses added\n\
+check 2nd entry in line 1",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+if(isflag < 0 || isflag > 1)
+  {
+  if(LANG == 1) sprintf(cmess,
+"%s\nSteuerflag fuer Vergleichsspannungen unzulaessig\n\
+Zulaessig:\n0 = keine Vergleichsspannungsrechnung\n\
+1 = Gestaltsaenderungsenergie- Hypothese\n\
+3.Wert in Zeile 1 ueberpruefen",cline);
+
+  if(LANG == 2) sprintf(cmess,
+"%s\nflag for reduced stress invalid\n\
+allowed:\n0 = no computing of reduced stresses\n\
+1 = compute von Mises stresses\n\
+check 3rd entry in line 1",cline);
+
+  MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+  return(2);
+  }
+
+return(0);
+}
+

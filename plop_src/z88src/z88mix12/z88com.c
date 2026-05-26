@@ -1,0 +1,2518 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* Z88COM fuer Windows
+* 2.3.2006 Rieg
+***********************************************************************/
+
+/***********************************************************************
+* Windows 95 und NT
+***********************************************************************/
+#ifdef FR_WIN95
+#include <z88com.h>
+
+#include <windows.h>
+#include <commctrl.h>
+
+#include <string.h>  /* strcpy, strcat */
+#include <stdio.h>   /* fopen, fscanf, fprintf, fclose */
+#endif
+
+/***********************************************************************
+*  Window- Function-Declarationen
+***********************************************************************/
+LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
+
+HWND InitToolBar   (HWND hParent);
+HWND InitStatusBar (HWND hParent);
+
+BOOL CALLBACK EditDiaProc(HWND, UINT, WPARAM, LPARAM);
+BOOL CALLBACK BrowDiaProc(HWND, UINT, WPARAM, LPARAM);
+
+HFONT EzCreateFont (HDC hdc, char * szFaceName, int iDeciPtHeight,
+                    int iDeciPtWidth, int iAttributes, BOOL fLogRes);
+
+/***********************************************************************
+*  Window- Variablen-Declarationen
+***********************************************************************/
+HMENU      hMenuGer,hMenuEng;
+HMENU      hMenu;
+
+HINSTANCE  hInstance;
+
+HWND       hToolBar;
+HWND       hStatusBar;
+
+HDC        hDC;
+
+HDC        hDCStatus;
+
+RECT       rect;
+
+HFONT      hFont;
+
+/***********************************************************************
+*  Function-Declarationen
+***********************************************************************/
+int ale88c(int);
+int lan88c(void);
+int wlog88c(FR_INT4,int);
+
+/***********************************************************************
+* Globale Variable
+***********************************************************************/
+/*--------------------------------------------------------------------------
+* Files
+*-------------------------------------------------------------------------*/
+FILE *fdyn,*fwlo;
+
+/*  
+**   fdyn= z88.dyn
+**   fwlo= z88com.log
+*/ 
+
+char cdyn[8]  = "z88.dyn";
+char clog[11] = "z88com.log";
+
+/*--------------------------------------------------------------------------
+* Variable
+*-------------------------------------------------------------------------*/
+FR_INT4 LANG= 0;
+
+int  iflago;
+
+char cename[128],cecall[128],calledit[512];
+char cbpref[128],cbcall[128],callbrow[512];
+
+/***********************************************************************
+* WinMain- Function
+***********************************************************************/
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   PSTR lpszCmdLine, int nCmdShow)
+{
+HWND       hWnd;
+MSG        msg;
+WNDCLASSEX wndclass;
+
+HBITMAP    hBitmap;
+HBRUSH     hBrush;
+
+char       capname[10];
+
+/***********************************************************************
+* Handles kommen lassen, window oeffnen
+***********************************************************************/
+strcpy(capname, "Z88COM");
+
+hBitmap= LoadBitmap(hInstance,MAKEINTRESOURCE(BMP_Z88BGR));
+hBrush=  CreatePatternBrush(hBitmap);
+
+wndclass.cbSize        = sizeof(wndclass);
+wndclass.style         = CS_HREDRAW | CS_VREDRAW;
+wndclass.lpfnWndProc   = WndProc;
+wndclass.cbClsExtra    = 0;
+wndclass.cbWndExtra    = 0;
+wndclass.hInstance     = hInstance;
+wndclass.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(ICO_Z88COM));
+wndclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
+ /* wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW+1); */
+wndclass.hbrBackground = hBrush;
+wndclass.lpszMenuName  = capname;
+wndclass.lpszClassName = capname;
+wndclass.hIconSm       = LoadIcon(hInstance, MAKEINTRESOURCE(ICO_Z88COM));
+
+RegisterClassEx(&wndclass);
+
+hWnd = CreateWindow(capname,"Z88- Commander Z88COM",
+                    WS_OVERLAPPEDWINDOW,
+                     10,  10,
+                    580, 200,
+                    NULL, NULL, hInstance, NULL);
+
+ShowWindow(hWnd, nCmdShow);
+UpdateWindow(hWnd);
+
+while(GetMessage(&msg, NULL, 0, 0))
+  {
+  TranslateMessage(&msg);
+  DispatchMessage(&msg);
+  }
+
+DeleteObject(hFont);              /* Font fuer Statusleiste */
+ReleaseDC(hStatusBar,hDCStatus);  /* HDC fuer Statusleiste  */
+DeleteObject((HGDIOBJ) hBrush);   /* Hintergrund-Pattern    */
+DeleteObject((HGDIOBJ) hBitmap);  /* Hintergrund-Bitmap     */
+
+return msg.wParam;
+}
+
+/***********************************************************************
+* Main Window Procedure
+***********************************************************************/
+LRESULT CALLBACK WndProc(HWND hWnd, UINT Message,
+                         WPARAM wParam, LPARAM lParam)
+{
+extern FR_INT4    LANG;
+
+extern            int iflago;
+extern char       cename[],cecall[],calledit[];
+extern char       cbpref[],cbcall[],callbrow[];
+
+
+HDC               hDC;
+PAINTSTRUCT       ps;
+
+RECT              rect;
+
+FILE              *fcfg, *f6, *f7;
+
+long              lpos,i;
+int               imess= 0, c, iret;
+static int        iq= 0;  /* kontextsensitive Hilfe an-aus */
+
+size_t            laenge;
+
+char              cmess[256];
+char              cstore[256];
+        
+/***********************************************************************
+* Los gehts
+***********************************************************************/
+switch (Message)
+  {
+/*----------------------------------------------------------------------
+* WM_CREATE
+*---------------------------------------------------------------------*/
+  case WM_CREATE:
+
+/*======================================================================
+* hInstance kommen lassen
+*=====================================================================*/
+    hInstance= (HINSTANCE)GetWindowLong(hWnd,GWL_HINSTANCE);
+
+/*======================================================================
+* Sprache feststellen
+*=====================================================================*/
+    iret= lan88c();
+
+    if(iret != 0) 
+      {
+      ale88c(iret);
+      PostQuitMessage(0);
+      return(1);
+      }
+
+    hMenuGer= LoadMenu(hInstance,"GERMAN");
+    hMenuEng= LoadMenu(hInstance,"ENGLISH");
+
+    if(LANG == 1) SetMenu(hWnd,hMenuGer);
+    if(LANG == 2) SetMenu(hWnd,hMenuEng);
+
+/*======================================================================
+* z88com.cfg oeffnen
+*=====================================================================*/
+    fcfg= fopen("z88com.cfg","r");
+    if(fcfg == NULL)
+      {
+      wlog88c(0L,LOG_NOCFG);
+      ale88c(AL_NOCFG);
+      fclose(fwlo);
+      PostQuitMessage(0);
+      return 0;
+      }
+
+    rewind(fcfg);
+
+
+    fgets(cstore,128,fcfg);
+    laenge= strlen(cstore);
+    strncpy(cename,cstore,laenge-1);
+    strcat (cename,"\0");
+
+    fgets(cstore,128,fcfg);
+    laenge= strlen(cstore);
+    strncpy(cecall,cstore,laenge-1);
+    strcat (cecall,"\0");
+
+    fgets(cstore,128,fcfg);
+    laenge= strlen(cstore);
+    strncpy(cbpref,cstore,laenge-1);
+    strcat (cbpref,"\0");
+
+    fgets(cstore,128,fcfg);
+    laenge= strlen(cstore);
+    strncpy(cbcall,cstore,laenge-1);
+    strcat (cbcall,"\0");
+
+    fclose(fcfg); 
+
+/*======================================================================
+* Toolbar
+*=====================================================================*/
+    hToolBar= InitToolBar(hWnd);
+
+/*======================================================================
+* Statusbar
+*=====================================================================*/
+    hStatusBar= InitStatusBar(hWnd);
+
+    hDCStatus= GetDC(hStatusBar);
+    hFont= EzCreateFont(hDCStatus,"Times New Roman",120,0,2,TRUE);
+    SelectObject(hDCStatus,hFont);
+
+/*  So geht's auch: via TextOut                                       */
+/*  SetBkColor(hDCStatus,RGB(255,128,0));                             */
+/*  TextOut(hDCStatus,1,3,"   Filechecker gestartet  ",26);           */
+
+  return 0; /* Ende WM_CREATE */
+
+/*----------------------------------------------------------------------
+* WM_INITMENU
+*---------------------------------------------------------------------*/
+  case WM_INITMENU:
+    hMenu= GetMenu(hWnd); 
+    if(iq == 0)
+      {
+      CheckMenuItem(hMenu,IDM_1Q, MF_UNCHECKED | MF_BYCOMMAND);   
+      CheckMenuItem(hMenu,IDM_2Q, MF_UNCHECKED | MF_BYCOMMAND);   
+      CheckMenuItem(hMenu,IDM_3Q, MF_UNCHECKED | MF_BYCOMMAND);   
+      CheckMenuItem(hMenu,IDM_4Q, MF_UNCHECKED | MF_BYCOMMAND);   
+      }
+    else
+      {
+      SetCursor(LoadCursor(NULL,IDC_HELP));
+      ShowCursor(TRUE);
+      CheckMenuItem(hMenu,IDM_1Q, MF_CHECKED | MF_BYCOMMAND);   
+      CheckMenuItem(hMenu,IDM_2Q, MF_CHECKED | MF_BYCOMMAND);   
+      CheckMenuItem(hMenu,IDM_3Q, MF_CHECKED | MF_BYCOMMAND);   
+      CheckMenuItem(hMenu,IDM_4Q, MF_CHECKED | MF_BYCOMMAND);   
+      }
+  return 0;
+
+/*----------------------------------------------------------------------
+* WM_MOVE
+*---------------------------------------------------------------------*/
+  case WM_MOVE:
+    if(LANG == 1) strcpy(cmess,"Erwarte Ihre Befehle..");
+    if(LANG == 2) strcpy(cmess,"Awaiting Your Commands");
+    GetClientRect(hStatusBar,&rect);
+    DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+  return 0;
+    
+/*----------------------------------------------------------------------
+* WM_SIZE
+*---------------------------------------------------------------------*/
+  case WM_SIZE:
+    {
+    int icxParent= LOWORD(lParam);
+    int icyParent= HIWORD(lParam);
+    int ix,iy,icx,icy;
+
+    GetWindowRect(hStatusBar, &rect);
+    icy= rect.bottom - rect.top;
+
+    ix= 0;
+    iy= icyParent - icy;
+    icx= icxParent;
+
+    MoveWindow(hStatusBar,ix,iy,icx,icy,TRUE);
+
+    SendMessage(hToolBar,TB_AUTOSIZE,0,0L);
+     
+    return 0;
+    }
+     
+/*----------------------------------------------------------------------
+* WM_NOTIFY
+*---------------------------------------------------------------------*/
+  case WM_NOTIFY:
+    {
+    LPNMHDR pnmh= (LPNMHDR) lParam;
+    LPSTR   pReply;
+
+    if(pnmh->code == TTN_NEEDTEXT)
+      {
+      LPTOOLTIPTEXT lpttt= (LPTOOLTIPTEXT) lParam;
+
+      switch(lpttt->hdr.idFrom)
+        {
+        case ITC_Z88V:
+          if(LANG == 1) pReply= "Start des Filecheckers Z88V";
+          if(LANG == 2) pReply= "Launch the File Checker Z88V";
+        break;
+
+        case ITC_Z88X:
+          if(LANG == 1) pReply= "Start des DXF- Konverters Z88X";
+          if(LANG == 2) pReply= "Launch the DXF Converter Z88X";
+        break;
+
+        case ITC_Z88G:
+          if(LANG == 1) pReply= "Start des COSMOS- Konverters Z88G";
+          if(LANG == 2) pReply= "Launch the COSMOS Converter Z88G";
+        break;
+
+        case ITC_Z88H:
+          if(LANG == 1) pReply= "Start des Cuthill-McKee Programms Z88H";
+          if(LANG == 2) pReply= "Launch the Cuthill McKee Programm Z88H";
+        break;
+
+        case ITC_Z88N:
+          if(LANG == 1) pReply= "Start des Netzgenerators Z88N";
+          if(LANG == 2) pReply= "Launch the Mesh Generator Z88N";
+        break;
+
+        case ITC_Z88F:
+          if(LANG == 1) pReply= "Start des Cholesky- Solvers Z88F";
+          if(LANG == 2) pReply= "Launch the Cholesky Solver Z88F";
+        break;
+
+        case ITC_Z88I1:
+          if(LANG == 1) pReply= "Start des Iterationssolvers Part 1 Z88I1";
+          if(LANG == 2) pReply= "Launch the Iteration Solver Part 1 Z88I1";
+        break;
+
+        case ITC_Z88I2:
+          if(LANG == 1) pReply= "Start des Iterationssolvers Part 2 Z88I2";
+          if(LANG == 2) pReply= "Launch the Iteration Solver Part 2 Z88I2";
+        break;
+
+        case ITC_Z88D:
+          if(LANG == 1) pReply= "Start des Spannungs-Prozessors Z88D";
+          if(LANG == 2) pReply= "Launch the Stress Processor  Z88D";
+        break;
+
+        case ITC_Z88E:
+          if(LANG == 1) pReply= "Start des Knotenkraft-Prozessors Z88E";
+          if(LANG == 2) pReply= "Launch the Nodal Force Processor Z88E";
+        break;
+
+        case ITC_Z88P:
+          if(LANG == 1) pReply= "Start des GDI Plotprogramms Z88P";
+          if(LANG == 2) pReply= "Launch the GDI Plot Program Z88P";
+        break;
+
+        case ITC_Z88O:
+          if(LANG == 1) pReply= "Start des OpenGL Plotprogramms Z88O";
+          if(LANG == 2) pReply= "Launch the OpenGL Plot Program Z88O";
+        break;
+
+         case ITC_DYN:
+          if(LANG == 1) pReply= "Editieren der Speicher-Steuerdatei Z88.DYN";
+          if(LANG == 2) pReply= "Edit the Memory Headerfile Z88.DYN";
+        break;
+
+        case ITC_HELP:
+          if(LANG == 1) pReply= "OnLine-Hilfe ein/aus";
+          if(LANG == 2) pReply= "OnLine Help On/Off";
+        break;
+        }
+      lstrcpy(lpttt->szText,pReply);
+      }
+    return 0;  /* sehr wichtig */
+    }
+
+/*----------------------------------------------------------------------
+* WM_COMMAND
+*---------------------------------------------------------------------*/
+  case WM_COMMAND:
+    hMenu= GetMenu(hWnd);
+    switch (LOWORD(wParam))
+      {
+
+/*----------------------------------------------------------------------
+* COMMAND : Menue Datei
+*---------------------------------------------------------------------*/
+/*======================================================================
+* COMMAND : Editor festlegen
+*=====================================================================*/
+      case IDM_EDITFEST:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88mr.htm");
+          if(LANG == 2) strcat(callbrow,"e88mr.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          iflago= 0;
+
+          if(LANG == 1) DialogBox(hInstance,"Dlg_Edit88G",hWnd,EditDiaProc);
+          if(LANG == 2) DialogBox(hInstance,"Dlg_Edit88E",hWnd,EditDiaProc);
+          InvalidateRect(hWnd,NULL,TRUE);
+
+          if(iflago== 1)  /* dann wurde im Dialog o.k. gegeben */
+            {
+            fcfg= fopen("z88com.cfg","w");
+            if(fcfg == NULL)
+              {
+              wlog88c(0L,LOG_NOCFG);
+              ale88c(AL_NOCFG);
+              fclose(fwlo);
+              PostQuitMessage(0);
+              return 0;
+              }
+
+            rewind(fcfg);
+
+            fputs (cename,fcfg);
+            fprintf(fcfg,"\n");
+            fputs (cecall,fcfg);
+            fprintf(fcfg,"\n");
+            fputs (cbpref,fcfg);
+            fprintf(fcfg,"\n");
+            fputs (cbcall,fcfg);
+            fprintf(fcfg,"\n");
+
+            iflago= 0;
+            fflush(fcfg);
+            fclose(fcfg);
+
+            if(LANG == 1) strcpy(cmess,"Editor fuer Z88 definiert");
+            if(LANG == 2) strcpy(cmess,"Editor defined for Z88");
+            GetClientRect(hStatusBar,&rect);
+            DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Browser festlegen
+*=====================================================================*/
+      case IDM_BROWSER:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88mr.htm");
+          if(LANG == 2) strcat(callbrow,"e88mr.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          iflago= 0;
+
+          if(LANG == 1) DialogBox(hInstance,"Dlg_Brow88G",hWnd,BrowDiaProc);
+          if(LANG == 2) DialogBox(hInstance,"Dlg_Brow88E",hWnd,BrowDiaProc);
+          InvalidateRect(hWnd,NULL,TRUE);
+
+          if(iflago== 1)  /* dann wurde im Dialog o.k. gegeben */
+            {
+            fcfg= fopen("z88com.cfg","w");
+            if(fcfg == NULL)
+              {
+              wlog88c(0L,LOG_NOCFG);
+              ale88c(AL_NOCFG);
+              fclose(fwlo);
+              PostQuitMessage(0);
+              return 0;
+              }
+
+            rewind(fcfg);
+
+            fputs (cename,fcfg);
+            fprintf(fcfg,"\n");
+            fputs (cecall,fcfg);
+            fprintf(fcfg,"\n");
+            fputs (cbpref,fcfg);
+            fprintf(fcfg,"\n");
+            fputs (cbcall,fcfg);
+            fprintf(fcfg,"\n");
+
+            iflago= 0;
+            fflush(fcfg);
+            fclose(fcfg);
+
+            if(LANG == 1) strcpy(cmess,"HTML-Browser fuer Z88 definiert");
+            if(LANG == 2) strcpy(cmess,"HTML Browser defined for Z88");
+            GetClientRect(hStatusBar,&rect);
+            DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Wer ist es
+*=====================================================================*/
+      case IDM_WER:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88in.htm");
+          if(LANG == 2) strcat(callbrow,"e88in.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,
+"Z88 Commander Z88COM fuer Windows\n\
+Version 12.0\n\
+Copyright Univ.-Prof.Dr.-Ing. Frank Rieg,\n\
+Universitaet Bayreuth, 2005\n\
+Alle Rechte vorbehalten");
+          if(LANG == 2) strcpy(cmess,
+"Z88 Commander Z88COM for Windows\n\
+Version 12.0\n\
+Copyright Prof.Dr. Frank Rieg,\n\
+University of Bayreuth, Germany 2005\n\
+All rights reserved");
+          MessageBox(NULL,cmess,"Z88COM", MB_OK | MB_ICONINFORMATION);
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Exit
+*=====================================================================*/
+      case IDM_XIT:
+        if(iq ==1)
+          ;
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88COM beenden ?");
+          if(LANG == 2) strcpy(cmess,"Quit Z88COM ?");
+          imess= MessageBox(NULL,cmess,"Z88COM",MB_OKCANCEL | MB_ICONQUESTION);
+          if(imess == IDOK)
+            {
+            PostQuitMessage(0);
+            }
+          if(imess == IDCANCEL) return 0;  
+          } 
+      return 0; 
+
+/*======================================================================
+* COMMAND : Hilfe via Menue
+*=====================================================================*/
+      case IDM_1Q:
+      case IDM_2Q:
+      case IDM_3Q:
+      case IDM_4Q:
+        if(iq== 0 ) iq= 1;
+        else        iq= 0;
+
+        if(iq == 1)
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HELP,(LPARAM) MAKELONG(TRUE,0) );
+          SetClassLong(hWnd,GCL_HCURSOR,(LONG)LoadCursor(NULL,IDC_HELP));
+          }
+        else
+          {
+          SendMessage(hToolBar,TB_CHECKBUTTON,
+          (WPARAM)ITC_HELP,(LPARAM) MAKELONG(FALSE,0) );
+          SetClassLong(hWnd,GCL_HCURSOR,(LONG)LoadCursor(NULL,IDC_ARROW));
+          }
+
+      return 0;
+      
+/*======================================================================
+* COMMAND : Hilfe via Toolbar
+*=====================================================================*/
+      case ITC_HELP:
+        if(iq== 0 ) iq= 1;
+        else        iq= 0;
+
+        if(iq == 1)
+          SetClassLong(hWnd,GCL_HCURSOR,(LONG)LoadCursor(NULL,IDC_HELP));
+        else
+          SetClassLong(hWnd,GCL_HCURSOR,(LONG)LoadCursor(NULL,IDC_ARROW));
+
+      return 0;
+
+/*----------------------------------------------------------------------
+* Menue Compute
+*---------------------------------------------------------------------*/
+
+/*======================================================================
+* COMMAND : Z88V
+*=====================================================================*/
+      case ITC_Z88V:
+      case IDM_Z88V:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88v.htm");
+          if(LANG == 2) strcat(callbrow,"e88v.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Filechecker Z88V wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"File Checker Z88V was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88v.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88V);
+            ale88c(AL_NOZ88V);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88G
+*=====================================================================*/
+      case ITC_Z88G:
+      case IDM_Z88G:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88g.htm");
+          if(LANG == 2) strcat(callbrow,"e88g.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"COSMOS-Konverter Z88G wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"COSMOS Converter Z88G was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88g.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88G);
+            ale88c(AL_NOZ88G);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88H
+*=====================================================================*/
+      case ITC_Z88H:
+      case IDM_Z88H:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88h.htm");
+          if(LANG == 2) strcat(callbrow,"e88h.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Cuthill-McKee Programm Z88H gestartet");
+          if(LANG == 2) strcpy(cmess,"Cuthill-McKee pro. Z88H was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88h.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88H);
+            ale88c(AL_NOZ88H);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88X
+*=====================================================================*/
+      case ITC_Z88X:
+      case IDM_Z88X:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88x.htm");
+          if(LANG == 2) strcat(callbrow,"e88x.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"CAD-Konverter Z88X wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"CAD Converter Z88X was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88x.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88X);
+            ale88c(AL_NOZ88X);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88N
+*=====================================================================*/
+      case ITC_Z88N:
+      case IDM_Z88N:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88n.htm");
+          if(LANG == 2) strcat(callbrow,"e88n.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Netzgenerator Z88N wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"Net Generator Z88N was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88n.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88N);
+            ale88c(AL_NOZ88N);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88F
+*=====================================================================*/
+      case ITC_Z88F:
+      case IDM_Z88F:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88f.htm");
+          if(LANG == 2) strcat(callbrow,"e88f.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Cholesky Solver Z88F wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"Cholesky Solver Z88F was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88f.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88F);
+            ale88c(AL_NOZ88F);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88I1
+*=====================================================================*/
+      case ITC_Z88I1:
+      case IDM_Z88I1:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ite.htm");
+          if(LANG == 2) strcat(callbrow,"e88ite.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Iterationssolver Part 1 Z88I1 wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"Iteration Solver Part 1 Z88I1 was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88i1.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88I1);
+            ale88c(AL_NOZ88I1);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88I2
+*=====================================================================*/
+      case ITC_Z88I2:
+      case IDM_Z88I2:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ite.htm");
+          if(LANG == 2) strcat(callbrow,"e88ite.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Iterationssolver Part 2 Z88I2 wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"Iteration Solver Part 2 Z88I2 was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88i2.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88I2);
+            ale88c(AL_NOZ88I2);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88D
+*=====================================================================*/
+      case ITC_Z88D:
+      case IDM_Z88D:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88d.htm");
+          if(LANG == 2) strcat(callbrow,"e88d.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,
+            "Spannungs-Prozessor Z88D wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"Stress Processor Z88D was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88d.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88D);
+            ale88c(AL_NOZ88D);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88E
+*=====================================================================*/
+      case ITC_Z88E:
+      case IDM_Z88E:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e.htm");
+          if(LANG == 2) strcat(callbrow,"e88e.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,
+            "Knotenkraft-Prozessor Z88E wurde gestartet");
+          if(LANG == 2) strcpy(cmess,
+            "Nodal Force Processor Z88E was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88e.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88E);
+            ale88c(AL_NOZ88E);
+            }
+          }
+      return 0; 
+
+/*----------------------------------------------------------------------
+* COMMAND : Menue Editieren
+*---------------------------------------------------------------------*/
+/*======================================================================
+* COMMAND : Editieren Z88.DYN
+*=====================================================================*/
+      case IDM_Z88DYNEDIT:
+      case ITC_DYN:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88dy.htm");
+          if(LANG == 2) strcat(callbrow,"e88dy.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88.DYN wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88.DYN was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+ 
+          strcpy(calledit,cecall);
+          strcat(calledit," z88.dyn");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDDYN);
+            ale88c(AL_NOEDDYN);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88P.COL
+*=====================================================================*/
+      case IDM_EDITCOL:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88p.htm");
+          if(LANG == 2) strcat(callbrow,"e88p.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88P.COL wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88P.COL was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88p.col");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDCOL);
+            ale88c(AL_NOEDCOL);
+            }
+          }    
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88O.OGL
+*=====================================================================*/
+      case IDM_EDITOGL:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88o.htm");
+          if(LANG == 2) strcat(callbrow,"e88o.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88O.OGL wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88O.OGL was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88o.ogl");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDOGL);
+            ale88c(AL_NOEDOGL);
+            }
+          }    
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88NI.TXT
+*=====================================================================*/
+      case IDM_Z88NITXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ni.htm");
+          if(LANG == 2) strcat(callbrow,"e88ni.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88NI.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88NI.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88ni.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDNI);
+            ale88c(AL_NOEDNI);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88I1.TXT
+*=====================================================================*/
+      case IDM_Z88I1TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88i1.htm");
+          if(LANG == 2) strcat(callbrow,"e88i1.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88I1.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88I1.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88i1.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDI1);
+            ale88c(AL_NOEDI1);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88I2.TXT
+*=====================================================================*/
+      case IDM_Z88I2TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88i2.htm");
+          if(LANG == 2) strcat(callbrow,"e88i2.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88I2.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88I2.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88i2.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDI2);
+            ale88c(AL_NOEDI2);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88I3.TXT
+*=====================================================================*/
+      case IDM_Z88I3TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88i3.htm");
+          if(LANG == 2) strcat(callbrow,"e88i3.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88I3.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88I3.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88i3.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDI3);
+            ale88c(AL_NOEDI3);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88I4.TXT
+*=====================================================================*/
+      case IDM_Z88I4TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88i4.htm");
+          if(LANG == 2) strcat(callbrow,"e88i4.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88I4.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88I4.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88i4.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDI4);
+            ale88c(AL_NOEDI4);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88I5.TXT
+*=====================================================================*/
+      case IDM_Z88I5TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88i5.htm");
+          if(LANG == 2) strcat(callbrow,"e88i5.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88I5.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88I5.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88i5.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDI5);
+            ale88c(AL_NOEDI5);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88O0.TXT
+*=====================================================================*/
+      case IDM_Z88O0TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ia.htm");
+          if(LANG == 2) strcat(callbrow,"e88ia.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88O0.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88O0.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88o0.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDO0);
+            ale88c(AL_NOEDO0);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88O1.TXT
+*=====================================================================*/
+      case IDM_Z88O1TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ia.htm");
+          if(LANG == 2) strcat(callbrow,"e88ia.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88O1.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88O1.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88o1.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDO1);
+            ale88c(AL_NOEDO1);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88O2.TXT
+*=====================================================================*/
+      case IDM_Z88O2TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ia.htm");
+          if(LANG == 2) strcat(callbrow,"e88ia.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88O2.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88O2.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88o2.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDO2);
+            ale88c(AL_NOEDO2);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88O3.TXT
+*=====================================================================*/
+      case IDM_Z88O3TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ia.htm");
+          if(LANG == 2) strcat(callbrow,"e88ia.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88O3.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88O3.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88o3.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDO3);
+            ale88c(AL_NOEDO3);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88O4.TXT
+*=====================================================================*/
+      case IDM_Z88O4TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ia.htm");
+          if(LANG == 2) strcat(callbrow,"e88ia.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88O4.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88O4.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88o4.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDO4);
+            ale88c(AL_NOEDO4);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Editieren Z88O6.TXT
+*=====================================================================*/
+      case IDM_Z88O6TXT:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ia.htm");
+          if(LANG == 2) strcat(callbrow,"e88ia.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Z88O6.TXT wurde editiert");
+          if(LANG == 2) strcpy(cmess,"Z88O6.TXT was edited");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          strcpy(calledit,cecall);
+          strcat(calledit," z88o6.txt");
+          imess= WinExec(calledit,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOEDO6);
+            ale88c(AL_NOEDO6);
+            }
+          }
+      return 0; 
+
+/*----------------------------------------------------------------------
+* Menue Plotten
+*---------------------------------------------------------------------*/
+/*======================================================================
+* COMMAND : Plotten mit Z88P
+*=====================================================================*/
+      case ITC_Z88P:
+      case IDM_Z88P:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88p.htm");
+          if(LANG == 2) strcat(callbrow,"e88p.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Plotprogramm Z88P wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"Plot Program Z88P was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88p.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88P);
+            ale88c(AL_NOZ88P);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Plotten mit Z88O
+*=====================================================================*/
+      case ITC_Z88O:
+      case IDM_Z88O:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88o.htm");
+          if(LANG == 2) strcat(callbrow,"e88o.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          if(LANG == 1) strcpy(cmess,"Plotprogramm Z88O wurde gestartet");
+          if(LANG == 2) strcpy(cmess,"Plot Program Z88O was launched");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+
+          imess= WinExec("z88o.exe",SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOZ88O);
+            ale88c(AL_NOZ88O);
+            }
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88P.STO loeschen
+*=====================================================================*/
+      case IDM_LOESCHEN:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88p.htm");
+          if(LANG == 2) strcat(callbrow,"e88p.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          remove("z88p.sto");
+  
+          if(LANG == 1) strcpy(cmess,"Z88P.STO geloescht !");
+          if(LANG == 2) strcpy(cmess,"Z88P.STO removed !");
+          MessageBox(NULL,cmess,"Z88COM", MB_OK | MB_ICONINFORMATION);
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : Z88O6.TXT und Z88O7.TXT verketten
+*=====================================================================*/
+      case IDM_ANHAENGEN:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88p.htm");
+          if(LANG == 2) strcat(callbrow,"e88p.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          f6= fopen("z88o6.txt","r+b");
+          if(f6 == NULL)
+            {
+            wlog88c(0L,LOG_NOO6);
+            ale88c(AL_NOO6);
+            return 0;
+            }
+  
+          f7= fopen("z88o7.txt","rb");
+          if(f7 == NULL)
+            {
+            wlog88c(0L,LOG_NOO7);
+            ale88c(AL_NOO7);
+            return 0;
+            }
+
+          fseek(f6,0L,SEEK_END);
+          lpos= ftell(f6);
+        
+          i= 0;
+          while( (c= fgetc(f7)) != EOF)
+            { fputc(c,f6); i++; }
+          wlog88c(i,LOG_NBYTES);
+          ale88c(AL_NBYTES);
+          fclose(f6);
+          fclose(f7);  
+
+          if(LANG == 1) strcpy(cmess,"Z88O6.TXT & Z88O7.TXT verkettet !");
+          if(LANG == 2) strcpy(cmess,"Z88O6.TXT & Z88O7.TXT concatenated !");
+          MessageBox(NULL,cmess,"Z88COM", MB_OK | MB_ICONINFORMATION);
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : XON/XOFF- Sequenz in Z88O6.TXT stellen
+*=====================================================================*/
+      case IDM_XONSEQ:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88p.htm");
+          if(LANG == 2) strcat(callbrow,"e88p.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          f6= fopen("z88o6.tmp","wb");
+          if(f6 == NULL)
+            {
+            wlog88c(0L,LOG_NOO6TMP);
+            ale88c(AL_NOO6TMP);
+            return 0;
+            }
+          rewind(f6);
+ 
+          fputs("\x01B.I256;;17:;\x01B.N;19:;\x00D\x00A",f6);
+
+          f7= fopen("z88o6.txt","rb");
+          if(f7 == NULL)
+            {
+            wlog88c(0L,LOG_NOO6);
+            ale88c(AL_NOO6);
+            return 0;
+            }
+          rewind(f7);
+
+          while( (c= fgetc(f7)) != EOF)
+            fputc(c,f6);
+  
+          fclose(f6);
+          fclose(f7);
+
+          remove("z88o6.txt");
+          rename("z88o6.tmp","z88o6.txt");
+
+          wlog88c(0L,LOG_XONXOFF);
+          ale88c(AL_XONXOFF);
+
+          if(LANG == 1) strcpy(cmess,"XON/XOFF-Sequenz in Z88O6.TXT gestellt");
+          if(LANG == 2) strcpy(cmess,"XON/XOFF command added to Z88O6.TXT");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+          }
+      return 0; 
+
+/*======================================================================
+* COMMAND : HP-GL Umschaltung und Querformat in Z88O6.TXT stellen
+*=====================================================================*/
+      case IDM_LASERJET:
+        if(iq ==1)
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88p.htm");
+          if(LANG == 2) strcat(callbrow,"e88p.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+        else
+          {
+          f6= fopen("z88o6.tmp","wb");
+          if(f6 == NULL)
+            {
+            wlog88c(0L,LOG_NOO6TMP);
+            ale88c(AL_NOO6TMP);
+            return 0;
+            }
+          rewind(f6);
+ 
+          /* Drucker zuruecksetzen */
+          fputs("\x01B\x045\x00D\x00A",f6);
+          /* Querformat einstellen */
+          fputs("\x01B\x026\x06C\x031\x04F\x00D\x00A",f6);
+          /* in HP-GL Mode gehen */
+          fputs("\x01B\x025\x030\x042\x00D\x00A",f6); 
+
+
+          f7= fopen("z88o6.txt","rb");           /* z88o6.txt oeffnen     */
+          if(f7 == NULL)
+            {
+            wlog88c(0L,LOG_NOO6);
+            ale88c(AL_NOO6);
+            return 0;
+            }
+          rewind(f7);
+
+          while( (c= fgetc(f7)) != EOF)          /* von .tmp in .txt kop. */   
+            fputc(c,f6);
+  
+          /* Drucker zuruecksetzen */
+          fputs("\x01B\x045\x00D\x00A",f6);
+          /* Hochformat einstellen */
+          fputs("\x01B\x026\x06C\x030\x04F\x00D\x00A",f6);
+          /* in PCL Mode gehen */
+          fputs("\x01B\x025\x030\x041\x00D\x00A",f6); 
+
+          fclose(f6);
+          fclose(f7);
+
+          remove("z88o6.txt");
+          rename("z88o6.tmp","z88o6.txt");
+
+          wlog88c(0L,LOG_LASERJET);
+          ale88c(AL_LASERJET);
+
+          if(LANG == 1) strcpy(cmess,"Drucker auf HP-GL umgeschaltet");
+          if(LANG == 2) strcpy(cmess,"Printer switched to HP-GL");
+          GetClientRect(hStatusBar,&rect);
+          DrawStatusText(hDCStatus,&rect,cmess, SBT_POPOUT);  
+          }
+      return 0; 
+
+/*----------------------------------------------------------------------
+* Menue Hilfe
+*---------------------------------------------------------------------*/
+      case IDM_INDEX:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ix.htm");
+          if(LANG == 2) strcat(callbrow,"e88ix.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0; 
+
+      case IDM_Z88ALLG:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88ge.htm");
+          if(LANG == 2) strcat(callbrow,"e88ge.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_Z88DYN:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88dy.htm");
+          if(LANG == 2) strcat(callbrow,"e88dy.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_AELE1:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e1.htm");
+          if(LANG == 2) strcat(callbrow,"e88e1.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_BELE2:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e2.htm");
+          if(LANG == 2) strcat(callbrow,"e88e2.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_CELE3:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e3.htm");
+          if(LANG == 2) strcat(callbrow,"e88e3.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_DELE4:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e4.htm");
+          if(LANG == 2) strcat(callbrow,"e88e4.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_EELE5:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e5.htm");
+          if(LANG == 2) strcat(callbrow,"e88e5.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_FELE6:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e6.htm");
+          if(LANG == 2) strcat(callbrow,"e88e6.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_GELE7:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e7.htm");
+          if(LANG == 2) strcat(callbrow,"e88e7.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_HELE8:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e8.htm");
+          if(LANG == 2) strcat(callbrow,"e88e8.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_IELE9:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e9.htm");
+          if(LANG == 2) strcat(callbrow,"e88e9.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_JELE10:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e10.htm");
+          if(LANG == 2) strcat(callbrow,"e88e10.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_KELE11:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e11.htm");
+          if(LANG == 2) strcat(callbrow,"e88e11.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_LELE12:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e12.htm");
+          if(LANG == 2) strcat(callbrow,"e88e12.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_MELE13:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e13.htm");
+          if(LANG == 2) strcat(callbrow,"e88e13.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_NELE14:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e14.htm");
+          if(LANG == 2) strcat(callbrow,"e88e14.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_OELE15:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e15.htm");
+          if(LANG == 2) strcat(callbrow,"e88e15.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_PELE16:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e16.htm");
+          if(LANG == 2) strcat(callbrow,"e88e16.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_QELE17:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e17.htm");
+          if(LANG == 2) strcat(callbrow,"e88e17.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_RELE18:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e18.htm");
+          if(LANG == 2) strcat(callbrow,"e88e18.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_SELE19:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e19.htm");
+          if(LANG == 2) strcat(callbrow,"e88e19.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_TELE20:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88e20.htm");
+          if(LANG == 2) strcat(callbrow,"e88e20.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_RANDBED:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88i2.htm");
+          if(LANG == 2) strcat(callbrow,"e88i2.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S1:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s1.htm");
+          if(LANG == 2) strcat(callbrow,"e88s1.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S2:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s2.htm");
+          if(LANG == 2) strcat(callbrow,"e88s2.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S3:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s3.htm");
+          if(LANG == 2) strcat(callbrow,"e88s3.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S4:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s4.htm");
+          if(LANG == 2) strcat(callbrow,"e88s4.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S5:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s5.htm");
+          if(LANG == 2) strcat(callbrow,"e88s5.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S6:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s6.htm");
+          if(LANG == 2) strcat(callbrow,"e88s6.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S7:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s7.htm");
+          if(LANG == 2) strcat(callbrow,"e88s7.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S8:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s8.htm");
+          if(LANG == 2) strcat(callbrow,"e88s8.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S9:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s9.htm");
+          if(LANG == 2) strcat(callbrow,"e88s9.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      case IDM_S10:
+          {
+          strcpy(callbrow,cbcall);
+          strcat(callbrow," ");
+          strcat(callbrow,cbpref);
+          if(LANG == 1) strcat(callbrow,"g88s10.htm");
+          if(LANG == 2) strcat(callbrow,"e88s10.htm");
+          imess= WinExec(callbrow,SW_SHOW);
+          if(imess < 33) 
+            {
+            wlog88c(0L,LOG_NOBROWSER);
+            ale88c(AL_NOBROWSER);
+            }
+           }
+      return 0;
+
+      default:
+        return DefWindowProc(hWnd, Message, wParam, lParam);
+      }
+
+/*----------------------------------------------------------------------
+* WM_PAINT
+*---------------------------------------------------------------------*/
+  case WM_PAINT:
+    hDC = BeginPaint(hWnd, &ps);  /* immer ! */
+    SetBkMode(hDC, TRANSPARENT);
+    EndPaint(hWnd, &ps);          /* immer ! */
+  return 0;
+
+/*----------------------------------------------------------------------
+* WM_CLOSE
+*---------------------------------------------------------------------*/
+  case WM_CLOSE:
+    PostQuitMessage(0);
+  return 0;
+
+/*----------------------------------------------------------------------
+* WM_DESTROY
+*---------------------------------------------------------------------*/
+  case WM_DESTROY:
+     PostQuitMessage(0);
+  return 0;
+
+/*----------------------------------------------------------------------
+* default
+*---------------------------------------------------------------------*/
+  default:
+    return DefWindowProc(hWnd, Message, wParam, lParam);
+  } 
+}
+
+/*****************************************************************************
+* Function EditDiaProc zeigt Dialog- Box fuer Editor an
+*****************************************************************************/
+BOOL CALLBACK EditDiaProc(HWND hDlg, UINT message,
+                          WPARAM wParam, LPARAM lParam)
+{
+extern int  iflago;
+extern char cename[], cecall[];
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT1,cename);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT2,cecall);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT1,cename,128);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT2,cecall,128);
+        iflago= 1;
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+
+/*****************************************************************************
+* Function BrowDiaProc zeigt Dialog- Box fuer Browser an
+*****************************************************************************/
+BOOL CALLBACK BrowDiaProc(HWND hDlg, UINT message,
+                          WPARAM wParam, LPARAM lParam)
+{
+extern int  iflago;
+extern char cbpref[], cbcall[];
+
+switch (message)
+  {
+  case WM_INITDIALOG:
+    SetDlgItemText(hDlg,IDDLG_V_TEXT3,cbpref);
+    SetDlgItemText(hDlg,IDDLG_V_TEXT4,cbcall);
+    return(TRUE);
+
+  case WM_COMMAND:
+    switch (LOWORD(wParam))
+      {
+      case IDOK:
+        GetDlgItemText(hDlg,IDDLG_V_TEXT3,cbpref,128);
+        GetDlgItemText(hDlg,IDDLG_V_TEXT4,cbcall,128);
+        iflago= 1;
+        EndDialog(hDlg,0);
+        return TRUE;
+        
+      case IDCANCEL:
+        EndDialog(hDlg,0);
+        return TRUE;
+      }
+
+  }
+ 
+return FALSE;
+}
+

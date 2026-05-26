@@ -1,0 +1,658 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  vp88
+*  16.9.2002 Rieg
+***********************************************************************/
+/*****************************************************************************
+* WindowsNT und 95
+*****************************************************************************/
+#ifdef FR_WIN95
+#include <z88p.h>
+#include <windows.h>
+#include <stdlib.h>  /* ltoa,exit */
+#include <string.h>  /* strlen,strcpy,strcat */
+#include <stdio.h>   /* fopen, fprintf, fclose */
+#endif
+
+/****************************************************************************
+*  Start vp88
+****************************************************************************/
+int vp88(HDC hDC)
+{
+HPEN hPenUnver,hPenVerfo;
+
+extern double rotx,roty,rotz;
+
+extern FR_INT4AY ityp;
+extern FR_INT4AY koffs;
+extern FR_INT4AY koi;
+extern FR_INT4AY kx;
+extern FR_INT4AY ky;
+
+extern FR_INT4 ne,nkp;
+
+extern int iflabe,ifverf,ifstala,ifansi;
+
+extern int ibUnver,ibVerfo;
+
+extern BYTE ifarbe[];
+
+FR_INT4 k,i;
+
+int idigit= 4;
+int ix[21],iy[21],itx,ity; 
+
+size_t laeng,laengx,laengy,laengz;
+
+char cst[6],crotx[20],croty[20],crotz[20],crx[30],cry[30],crz[30];  
+
+/***********************************************************************
+* Pens kommen lassen
+***********************************************************************/
+hPenUnver= CreatePen(PS_SOLID,ibUnver,RGB(ifarbe[0],ifarbe[1],ifarbe[2]));
+hPenVerfo= CreatePen(PS_SOLID,ibVerfo,RGB(ifarbe[3],ifarbe[4],ifarbe[5]));
+
+
+/***********************************************************************
+*  grosse elementschleife
+***********************************************************************/
+for(k= 1; k <= ne; k++)
+  {  
+
+/*----------------------------------------------------------------------
+* 8 punkte fuer 8-k hexaeder
+*---------------------------------------------------------------------*/
+  if(ityp[k]== 1)
+    {
+    for(i= 1; i <= 8; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[2],iy[2]);
+    LineTo(hDC,ix[3],iy[3]);
+    LineTo(hDC,ix[4],iy[4]);
+    LineTo(hDC,ix[1],iy[1]);
+    LineTo(hDC,ix[5],iy[5]);
+
+    MoveToEx(hDC,ix[2],iy[2],NULL);
+
+    LineTo(hDC,ix[6],iy[6]);
+
+    MoveToEx(hDC,ix[3],iy[3],NULL);
+
+    LineTo(hDC,ix[7],iy[7]);
+
+    MoveToEx(hDC,ix[4],iy[4],NULL);
+
+    LineTo(hDC,ix[8],iy[8]);
+    LineTo(hDC,ix[5],iy[5]);
+    LineTo(hDC,ix[6],iy[6]);
+    LineTo(hDC,ix[7],iy[7]);
+    LineTo(hDC,ix[8],iy[8]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[7])*0.5)-10; 
+      ity= (int) ((iy[1] + iy[7])*0.5)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 2 punkte fuer raeuml stab, ebenen stab, balken & welle
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 2 || ityp[k]== 4 || ityp[k]== 5 ||
+          ityp[k]== 9 || ityp[k]== 13)
+    {
+    for(i= 1L; i <= 2; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[2],iy[2]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[2])*0.5)-10; 
+      ity= (int) ((iy[1] + iy[2])*0.5)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 6 punkte fuer 6-k scheibe gerade & isoparametrisch
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 3 || ityp[k]== 14 || ityp[k]== 15 || ityp[k]== 18)
+    {
+    for(i= 1; i <= 6; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[4],iy[4]);
+    LineTo(hDC,ix[2],iy[2]);
+    LineTo(hDC,ix[5],iy[5]);
+    LineTo(hDC,ix[3],iy[3]);
+    LineTo(hDC,ix[6],iy[6]);
+    LineTo(hDC,ix[1],iy[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[2] + ix[3])*0.333)-10; 
+      ity= (int) ((iy[1] + iy[2] + iy[3])*0.333)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 3 punkte fuer 3-k torus 
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 6)
+    {
+    for(i= 1; i <= 3; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[2],iy[2]);
+    LineTo(hDC,ix[3],iy[3]);
+    LineTo(hDC,ix[1],iy[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[2] + ix[3])*0.333)-10; 
+      ity= (int) ((iy[1] + iy[2] + iy[3])*0.333)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 8 punkte fuer 8-k serendipity-scheibe & -torus und platte 20
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 7 || ityp[k]== 8 || ityp[k]== 20)
+    {
+    for(i= 1; i <= 8; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[5],iy[5]);
+    LineTo(hDC,ix[2],iy[2]);
+    LineTo(hDC,ix[6],iy[6]);
+    LineTo(hDC,ix[3],iy[3]);
+    LineTo(hDC,ix[7],iy[7]);
+    LineTo(hDC,ix[4],iy[4]);
+    LineTo(hDC,ix[8],iy[8]);
+    LineTo(hDC,ix[1],iy[1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[3])*0.5)-10; 
+      ity= (int) ((iy[1] + iy[3])*0.5)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 20 punkte fuer 20-k hexaeder
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 10)
+    {
+    for(i= 1; i <= 20; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+/*======================================================================
+* obere ebene
+*=====================================================================*/
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[ 9],iy[ 9]);
+    LineTo(hDC,ix[ 2],iy[ 2]);
+    LineTo(hDC,ix[10],iy[10]);
+    LineTo(hDC,ix[ 3],iy[ 3]);
+    LineTo(hDC,ix[11],iy[11]);
+    LineTo(hDC,ix[ 4],iy[ 4]);
+    LineTo(hDC,ix[12],iy[12]);
+    LineTo(hDC,ix[ 1],iy[ 1]);
+
+/*======================================================================
+* untere ebene
+*=====================================================================*/
+    MoveToEx(hDC,ix[5],iy[5],NULL);
+
+    LineTo(hDC,ix[13],iy[13]);
+    LineTo(hDC,ix[ 6],iy[ 6]);
+    LineTo(hDC,ix[14],iy[14]);
+    LineTo(hDC,ix[ 7],iy[ 7]);
+    LineTo(hDC,ix[15],iy[15]);
+    LineTo(hDC,ix[ 8],iy[ 8]);
+    LineTo(hDC,ix[16],iy[16]);
+    LineTo(hDC,ix[ 5],iy[ 5]);
+
+/*======================================================================
+* mittlere ebene
+*=====================================================================*/
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[17],iy[17]);
+    LineTo(hDC,ix[ 5],iy[ 5]);
+
+    MoveToEx(hDC,ix[2],iy[2],NULL);
+
+    LineTo(hDC,ix[18],iy[18]);
+    LineTo(hDC,ix[ 6],iy[ 6]);
+
+    MoveToEx(hDC,ix[3],iy[3],NULL);
+
+    LineTo(hDC,ix[19],iy[19]);
+    LineTo(hDC,ix[ 7],iy[ 7]);
+
+    MoveToEx(hDC,ix[4],iy[4],NULL);
+
+    LineTo(hDC,ix[20],iy[20]);
+    LineTo(hDC,ix[ 8],iy[ 8]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[7])*0.5)-10; 
+      ity= (int) ((iy[1] + iy[7])*0.5)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 12 punkte fuer 12-k serendipity-scheibe & -torus
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 11 || ityp[k]== 12)
+    {
+    for(i= 1; i <= 12; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[ 5],iy[ 5]);
+    LineTo(hDC,ix[ 6],iy[ 6]);
+    LineTo(hDC,ix[ 2],iy[ 2]);
+    LineTo(hDC,ix[ 7],iy[ 7]);
+    LineTo(hDC,ix[ 8],iy[ 8]);
+    LineTo(hDC,ix[ 3],iy[ 3]);
+    LineTo(hDC,ix[ 9],iy[ 9]);
+    LineTo(hDC,ix[10],iy[10]);
+    LineTo(hDC,ix[ 4],iy[ 4]);
+    LineTo(hDC,ix[11],iy[11]);
+    LineTo(hDC,ix[12],iy[12]);
+    LineTo(hDC,ix[ 1],iy[ 1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[3])*0.5)-10; 
+      ity= (int) ((iy[1] + iy[3])*0.5)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 12 punkte fuer 16-k lagrange platte
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 19)
+    {
+    for(i= 1; i <= 16; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[ 2],iy[ 2]);
+    LineTo(hDC,ix[ 3],iy[ 3]);
+    LineTo(hDC,ix[ 4],iy[ 4]);
+    LineTo(hDC,ix[ 8],iy[ 8]);
+    LineTo(hDC,ix[12],iy[12]);
+    LineTo(hDC,ix[16],iy[16]);
+    LineTo(hDC,ix[15],iy[15]);
+    LineTo(hDC,ix[14],iy[14]);
+    LineTo(hDC,ix[13],iy[13]);
+    LineTo(hDC,ix[ 9],iy[ 9]);
+    LineTo(hDC,ix[ 5],iy[ 5]);
+    LineTo(hDC,ix[ 1],iy[ 1]);
+
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[16])*0.5)-10; 
+      ity= (int) ((iy[1] + iy[16])*0.5)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 10 punkte fuer 10-k tetraeder 
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 16)
+    {
+    for(i= 1; i <= 10; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    /* Grundlinie 1-5-2-6-3-7-1 */
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[5],iy[5]);
+    LineTo(hDC,ix[2],iy[2]);
+    LineTo(hDC,ix[6],iy[6]);
+    LineTo(hDC,ix[3],iy[3]);
+    LineTo(hDC,ix[7],iy[7]);
+    LineTo(hDC,ix[1],iy[1]);
+    
+    /* Linien 1-10-4-9-3 */
+    LineTo(hDC,ix[10],iy[10]);
+    LineTo(hDC,ix[4],iy[4]);
+    LineTo(hDC,ix[9],iy[9]);
+    LineTo(hDC,ix[3],iy[3]);
+
+    /* Linie 2-8-4 */
+    MoveToEx(hDC,ix[2],iy[2],NULL);
+
+    LineTo(hDC,ix[8],iy[8]);
+    LineTo(hDC,ix[4],iy[4]);
+    
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[2] + ix[3] + ix[4])*0.25)-10; 
+      ity= (int) ((iy[1] + iy[2] + iy[3] + iy[4])*0.25)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* 4 punkte fuer 4-k tetraeder 
+*---------------------------------------------------------------------*/
+  else if(ityp[k]== 17)
+    {
+    for(i= 1; i <= 4; i++)
+      {
+      ix[i]= kx[koi[koffs[k]+i-1]];
+      iy[i]= ky[koi[koffs[k]+i-1]];
+      }
+
+    if(ifverf== IDM_UNVERFORMT) SelectObject(hDC,hPenUnver);
+    else                        SelectObject(hDC,hPenVerfo); 
+
+    /* Grundlinie 1-2-3-1 */
+    MoveToEx(hDC,ix[1],iy[1],NULL);
+
+    LineTo(hDC,ix[2],iy[2]);
+    LineTo(hDC,ix[3],iy[3]);
+    LineTo(hDC,ix[1],iy[1]);
+    
+    /* Linien 1-4-3 */
+    LineTo(hDC,ix[4],iy[4]);
+    LineTo(hDC,ix[3],iy[3]);
+
+    /* Linie 2-4 */
+    MoveToEx(hDC,ix[2],iy[2],NULL);
+
+    LineTo(hDC,ix[4],iy[4]);
+    
+    if( (iflabe== IDM_ELEMENTE || iflabe== IDM_ALLES) &&
+         ifstala == ID_ENABLELABELS)
+      {
+/*======================================================================
+*     elementnummern plotten
+*=====================================================================*/
+      itx= (int) ((ix[1] + ix[2] + ix[3] + ix[4])*0.25)-10; 
+      ity= (int) ((iy[1] + iy[2] + iy[3] + iy[4])*0.25)- 5; 
+
+      ltoa(k,cst,10);
+      laeng= strlen(cst);
+
+      SetTextColor(hDC,RGB(ifarbe[6],ifarbe[7],ifarbe[8]));
+      TextOut(hDC,itx,ity,cst,laeng);
+      }
+    }
+
+  } /* ende grosse elementschleife */
+
+/***********************************************************************
+*  ggf knotennummern plotten
+***********************************************************************/ 
+if((iflabe== IDM_KNOTEN || iflabe== IDM_ALLES) &&
+    ifstala == ID_ENABLELABELS)
+  {
+  for(i= 1; i <= nkp; i++)
+    {
+    ltoa(i,cst,10);
+    laeng= strlen(cst);
+    itx= kx[i] - 5;
+    ity= ky[i] - 5;
+
+    SetTextColor(hDC,RGB(ifarbe[9],ifarbe[10],ifarbe[11]));
+    TextOut(hDC,itx,ity,cst,laeng);
+    }
+  }
+
+if(ifansi== IDM_3DIM)
+  {
+  gcvt(rotx,idigit,crotx);
+  gcvt(roty,idigit,croty);
+  gcvt(rotz,idigit,crotz);
+  strcpy(crx,"ROTX= ");
+  strcpy(cry,"ROTY= ");
+  strcpy(crz,"ROTZ= ");
+  strcat(crx,crotx);
+  strcat(cry,croty);
+  strcat(crz,crotz);
+  laengx= strlen(crx);
+  laengy= strlen(cry);
+  laengz= strlen(crz);
+  
+  itx= 10;
+  ity= 50;
+  TextOut(hDC,itx,ity,crx,laengx);
+
+  itx= 10;
+  ity= 65;
+  TextOut(hDC,itx,ity,cry,laengy);
+
+  itx= 10;
+  ity= 80;
+  TextOut(hDC,itx,ity,crz,laengz);
+  }
+
+DeleteObject(hPenUnver);
+DeleteObject(hPenVerfo);
+
+return 0;
+}
+
+@

@@ -1,0 +1,567 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/**********************************************************************
+* Function g4i188 prueft die 4.Eingabegruppe fuer Z88I1.TXT & Z88NI.TXT
+* 9.9.2002 Rieg
+**********************************************************************/
+#ifdef FR_WIN95
+#include <z88v.h>
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#endif
+
+/***********************************************************************
+* Functions
+***********************************************************************/
+void erif88(HWND hWnd,long izeile);
+
+/***********************************************************************
+* Start G4I188
+***********************************************************************/
+int g4i188(HWND hWnd)
+{
+extern FILE *fdatei;
+        
+extern FR_INT4 LANG;
+
+extern FR_INT4AY jtyp;
+
+extern FR_INT4 ne,neg,ibflag,iwarn,izeile,ipflag,ifnii1;
+
+double emod,rnue,qpara,riyy,eyy,rizz,ezz,rit,wt;
+       
+FR_INT4 ivon,ibis,ibisalt,intord,i,j;
+
+int ier;
+
+char *cresult;
+char cline[256],clina[256],cmess[1024], chead[12];
+
+/**********************************************************************
+* Header vorbelegen
+**********************************************************************/
+if(ifnii1 == 1)
+  strcpy(chead,"Z88NI.TXT");
+else
+  strcpy(chead,"Z88I1.TXT");  
+                
+/**********************************************************************
+* Checken der 4.Gruppe in Schleife
+**********************************************************************/
+for(i = 1;i <= neg;i++)                          /* 40 */
+  {
+  izeile++;
+
+  if(i > 1)
+    ibisalt= ibis;
+            
+  cresult= fgets(cline,256,fdatei);
+  if(!cresult)
+    {
+    erif88(hWnd,izeile);
+    return(2);
+    }
+
+/*----------------------------------------------------------------------
+* Schreibfehler ?
+*---------------------------------------------------------------------*/
+  if(ibflag == 0)
+    {
+    ier= sscanf(cline,"%ld %ld %lg %lg %ld %lg",
+    &ivon,&ibis,&emod,&rnue,&intord,&qpara);
+    if(ier != 6) 
+      {
+      if(LANG == 1) sprintf(cmess,"%s\nSchreibfehler oder fehlende Daten\
+ in Zeile %ld entdeckt",cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,"%s\ntyping error or missing entries\
+ in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+  if(ibflag == 1)
+    {
+    ier= sscanf(cline,"%ld %ld %lg %lg %ld %lg %lg %lg %lg %lg %lg %lg",
+    &ivon,&ibis,&emod,&rnue,&intord,&qpara,&riyy,&eyy,&rizz,&ezz,&rit,&wt);
+    if(ier != 12) 
+      {
+      if(LANG == 1) sprintf(cmess,"%s\nSchreibfehler oder fehlende Daten\
+ in Zeile %ld entdeckt",cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,"%s\ntyping error or missing entries\
+ in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+  if(ipflag != 0)
+    {
+    ier= sscanf(cline,"%ld %ld %lg %lg %ld %lg %lg",
+    &ivon,&ibis,&emod,&rnue,&intord,&qpara,&riyy);
+    if(ier != 7) 
+      {
+      if(LANG == 1) sprintf(cmess,"%s\nSchreibfehler oder fehlende Daten\
+ in Zeile %ld entdeckt",cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,"%s\ntyping error or missing entries\
+ in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+/*---------------------------------------------------------------------
+* ivon ?
+*--------------------------------------------------------------------*/
+/*=====================================================================
+* Sonderfall 1. E-Gesetz:
+*====================================================================*/
+  if(i == 1)
+    {
+    if(ivon != 1)
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\nAnfangswert im 1. E-Gesetz nicht 1\n\
+1.Wert in Zeile %ld ueberpruefen",cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nstart value in 1. mat info line not 1\n\
+check 1st entry in line %ld",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+          
+/*=====================================================================
+* ivon groesser als ne ?
+*====================================================================*/
+  if(ivon > ne)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nAnfangswert im %ld. E-Gesetz groesser als %ld = Anzahl Elemente\n\
+3.Wert in Zeile 1 ueberpruefen\n1.Wert in Zeile %ld ueberpruefen",
+    cline,i,ne,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nstart value in %ld. mat info line greater than %ld\
+ = number of elements\n\
+check 3rd entry in line 1\ncheck 1. entry in line %ld",
+    cline,i,ne,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*=====================================================================
+* ivon groesser als ibis ?
+*====================================================================*/
+  if(ivon > ibis)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nAnfangswert im %ld. E-Gesetz groesser als Endwert\n\
+1.Wert und 2.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nstart value in %ld. mat info line greater than end value\n\
+check 1st entry and 2nd entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*---------------------------------------------------------------------
+* ibis ?
+*--------------------------------------------------------------------*/
+/*=====================================================================
+* ibis groesser als ne ?
+*====================================================================*/
+  if(ibis > ne)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nEndwert im %ld. E-Gesetz groesser als %ld = Anzahl Elemente\n\
+3.Wert in Zeile 1 ueberpruefen\n2.Wert in Zeile %ld ueberpruefen",
+    cline,i,ne,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nend value in %ld. mat info line greater than %ld = number of elements\n\
+check 3rd value in line 1\ncheck 2. entry in line %ld",
+    cline,i,ne,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+          
+/*=====================================================================
+* i > 1: ivon nicht ibisalt +1 ?
+*====================================================================*/
+  if(i > 1)
+    {
+    if(ivon != ibisalt+1)
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\n%s\nEndwert im %ld. E-Gesetz nicht Anfangswert-1 im %ld. E-Gesetz\n\
+2.Wert in Zeile %ld ueberpruefen\n1.Wert in Zeile %ld ueberpruefen",
+      clina,cline,i-1,i,izeile-1,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\n%s\nend value in %ld. mat info line not equal\n\
+(start value - 1) in %ld. mat info line\n\
+check 2nd entry in line %ld\ncheck 1. entry in line %ld",
+      clina,cline,i-1,i,izeile-1,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+/*=====================================================================
+* Sonderfall letztes E-Gesetz:
+*====================================================================*/
+  if(i == neg)
+    {
+    if(ibis != ne)
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nEndwert im letzten E-Gesetz nicht %ld\n\
+3.Wert in Zeile 1 und 2.Wert in Zeile %ld ueberpruefen",cline,ne,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\nend value in last mat info line not %ld\n\
+check 3rd entry in line 1 and 2. entry in line %ld",cline,ne,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+/*----------------------------------------------------------------------
+* emod nicht zu klein ?
+*---------------------------------------------------------------------*/
+  if(fabs(emod) < 1e-13)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nE-Modul fuer %ld. E-Gesetz nahe 0\n\
+3.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nYoung's Modulus for %ld. mat info line about 0\n\
+check 3rd entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+    
+/*----------------------------------------------------------------------
+* rnue nicht zu klein ?
+*---------------------------------------------------------------------*/
+  if(fabs(rnue) < 1e-13)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nQuerkontraktionszahl fuer %ld. E-Gesetz nahe 0\n\
+4.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nPoisson's Ratio for %ld. mat info line about 0\n\
+check 4th entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*----------------------------------------------------------------------
+* intord ?
+*---------------------------------------------------------------------*/
+if(!(intord == 0 || intord == 1 || intord == 2 || intord == 3 ||
+     intord == 4 || intord == 5 || intord == 7 || intord == 13))
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nFalsche Integrationsordnung E-Gesetz %ld:\n\
+Zulaessig fuer Elementtypen 2,3,4,5,6,9,13: 0\n\
+Zulaessig fuer Elementtypen 1,7,8,10,11,12,19,20: 1,2,3,4\n\
+Zulaessig fuer Elementtypen 14,15,18: 3,7,13\n\
+Zulaessig fuer Elementtypen 16,17: 1,4,5\n\
+5.Wert in Zeile %ld ueberpruefen",cline,i,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nwrong integration value in mat line %ld\n\
+allowed values for element types 2,3,4,5,6,9,13: 0\n\
+allowed values for element types 1,7,8,10,11,12,19,20: 1,2,3,4\n\
+allowed values for element types 14,15,18: 3,7,13\n\
+allowed values for element types 16,17: 1,4,5\n\
+check 5th entry in line %ld",cline,i,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+/*---------------------------------------------------------------------
+* qpara nicht zu klein ?
+*--------------------------------------------------------------------*/ 
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 3 || jtyp[j] == 4 || jtyp[j] == 5 ||
+       jtyp[j] == 7 || jtyp[j] == 9 || jtyp[j] ==11 ||
+       jtyp[j] ==14 || jtyp[j] ==18 || jtyp[j] ==19 ||
+       jtyp[j] ==20)
+      { 
+      if(fabs(qpara) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nQuerschnittsparameter sehr klein\n\
+Muss fuer Elementtypen 3,4,5,7,9,11,14,18,19,20 ungleich 0 sein\n\
+6.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\ncross section value very small\n\
+must be greater than 0 for element types 3,4,5,7,9,11,14,18,19,20\n\
+check 6th entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+/*---------------------------------------------------------------------
+* Balkenparameter
+*--------------------------------------------------------------------*/ 
+/*====================================================================*
+* rizz
+*=====================================================================*/
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 2 || jtyp[j] == 13)
+      { 
+      if(fabs(rizz) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nBiege-Traegheitsmoment ZZ sehr klein\n\
+Muss fuer Elementtypen 2 bzw. 13 ungleich 0 sein\n\
+9.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\nsecond moment of area ZZ (bending) very small\n\
+must be greater than 0 for element types 2 and 13\n\
+check 9th entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+/*====================================================================*
+* ezz
+*=====================================================================*/
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 2 || jtyp[j] == 13)
+      { 
+      if(fabs(ezz) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nmax. Randfaserabstand ZZ sehr klein\n\
+Muss fuer Elementtypen 2 bzw. 13 ungleich 0 sein\n\
+10.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\nmax. distance from neutral axis ZZ very small\n\
+must be greater than 0 for element types 2 and 13\n\
+check 10th entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+/*====================================================================*
+* riyy
+*=====================================================================*/
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 2)
+      { 
+      if(fabs(riyy) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nBiege-Traegheitsmoment YY sehr klein\n\
+Muss fuer Elementtyp 2 ungleich 0 sein\n\
+7.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\nsecond moment of area YY (bending) very small\n\
+must be greater than 0 for element type 2\n\
+check 7. entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 18 || jtyp[j] == 19 || jtyp[j] == 20)
+      { 
+      if(FR_FABS(riyy) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nFlaechenlast sehr klein\n\
+Muss fuer Elementtypen 18,19 und 20 ungleich 0 sein\n\
+7.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\narea load very small\n\
+must be greater than 0 for element types 18,19 and 20\n\
+check 7th entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+/*====================================================================*
+* eyy
+*=====================================================================*/
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 2L)
+      { 
+      if(fabs(eyy) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nmax. Randfaserabstand YY sehr klein\n\
+Muss fuer Elementtyp 2 ungleich 0 sein\n\
+8.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\nmax. distance from neutral axis YY very small\n\
+must be greater than 0 for element type 2\n\
+check 8th entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+/*====================================================================*
+* rit
+*=====================================================================*/
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 2)
+      { 
+      if(fabs(rit) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nTorsions- Traegheitsmoment sehr klein\n\
+Muss fuer Elementtyp 2 ungleich 0 sein\n\
+11.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\nsecond moment of area (torsion) very small\n\
+must be greater than 0 for element type 2\n\
+check 11th entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+/*====================================================================*
+* wt
+*=====================================================================*/
+  for(j= ivon; j <= ibis; j++)
+    {
+    if(jtyp[j] == 2)
+      { 
+      if(fabs(wt) < 1e-13)
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nTorsions- Widerstandsmoment sehr klein\n\
+Muss fuer Elementtyp 2 ungleich 0 sein\n\
+12.Wert in Zeile %ld ueberpruefen\n\
+Vielleicht beabsichtigt .. kein Stop\n",cline,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\nsection modulus (torsion) very small\n\
+must be greater than 0 for element type 2\n\
+check 12th entry in line %ld\n\
+possibly intended .. no halt\n",cline,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+        iwarn++;
+        }
+      }
+    }
+
+  strcpy(clina,cline);
+  }                                              /* e40 */
+
+/***********************************************************************
+* Ende grp4: keine Fehler
+***********************************************************************/
+return(0);
+}
+ 

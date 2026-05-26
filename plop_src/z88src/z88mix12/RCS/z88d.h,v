@@ -1,0 +1,179 @@
+head	1.1;
+access;
+symbols;
+locks
+	david:1.1; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.06.18.45.42;	author david;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@@uni-bayreuth.de
+* dr.frank.rieg@@t-online.de
+* 
+* V12.0  February 14, 2005
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  z88d.h fuer UNIX und Windows
+*  4.10.2005 Rieg
+***********************************************************************/
+
+/***********************************************************************
+* Datentypen Windows und UNIX
+***********************************************************************/
+#define FR_INT4AY long *               /* Pointer auf long        */
+#define FR_INT4 long                   /* long                    */
+#define FR_CALLOC calloc               /* calloc */
+#define FR_SIZERW size_t               /* Size fuer fread, fwrite */
+
+#ifdef FR_XDOUB
+#define FR_SQRT sqrt                   /* sqrt                    */
+#define FR_POW pow                     /* pow                     */
+#define FR_FABS fabs                   /* fabs                    */
+#define FR_SIN sin                     /* sin                     */
+#define FR_COS cos                     /* cos                     */
+#define FR_ATAN atan                   /* atan                    */
+#define FR_DOUBLEAY double *           /* Pointer auf double      */
+#define FR_DOUBLE double               /* double                  */
+#endif
+
+#ifdef FR_XQUAD
+#define FR_SQRT sqrtl                  /* sqrtl                   */
+#define FR_POW powl                    /* powl                    */
+#define FR_FABS fabsl                  /* fabsl                   */
+#define FR_SIN sinl                    /* sinl                    */
+#define FR_COS cosl                    /* cosl                    */
+#define FR_ATAN atanl                  /* atanl                   */
+#define FR_DOUBLEAY long double *      /* Pointer auf long double */
+#define FR_DOUBLE long double          /* long double             */
+#endif
+
+#include <z88math.h>
+
+/***********************************************************************
+* Icon
+***********************************************************************/
+#define ICO_Z88D                       10
+
+/***********************************************************************
+* Cursor
+***********************************************************************/
+#define CUR_Z88D                       20
+
+/***********************************************************************
+* Toolbar
+***********************************************************************/
+#define BMP_Z88D                       30
+
+/***********************************************************************
+* Menue-IDs
+***********************************************************************/
+#define IDM_WER                        100
+#define IDM_XIT                        110
+#define IDM_GO                         120
+
+/***********************************************************************
+* Toolbar-IDs
+***********************************************************************/
+#define ITC_GO                         130
+#define ITC_HELP                       140
+
+/***********************************************************************
+* Alerts
+***********************************************************************/
+#define AL_NOLOG 3000                  /* kein Z88F.LOG */ 
+#define AL_NODYN 3010                  /* kein Z88.DYN */
+#define AL_WRONGDYN 3020               /* Fehler in Z88.DYN */
+#define AL_NOMEMY 3030                 /* nicht genug Memory */
+#define AL_NOO3 3040                   /* Fehler Oeffnen z88o3.txt */
+#define AL_NOO5 3050                   /* Fehler Oeffnen z88o5.txt */
+#define AL_NOO8 3055                   /* Fehler Oeffnen z88o8.txt */
+#define AL_NOI3 3060                   /* Fehler Oeffnen z88i3.txt */
+#define AL_NO1Y 3070                   /* Fehler Oeffnen z88o1.bny */
+#define AL_NO3Y 3080                   /* Fehler Oeffnen z88o3.bny */
+#define AL_JACNEG 3090                 /* Jacobi-Determinate <= 0 */
+
+/***********************************************************************
+* Texte
+***********************************************************************/
+#define TX_REAO1Y 3500                 /* Z88O1.BNY einlesen */
+#define TX_REAO3Y 3510                 /* Z88O3.BNY einlesen */
+#define TX_SPANNU 3530                 /* Spannungen */
+#define TX_EXITZ88D 3540               /* Ende Z88D */
+
+/***********************************************************************
+* Log- Eintraege
+***********************************************************************/
+#define LOG_BZ88D 4000                 /* Beginn Z88D */
+#define LOG_OPENZ88DYN 4010            /* Oeffnen Z88.DYN */
+#define LOG_NODYN 4020                 /* kann Z88.DYN nicht oeffnen */
+#define LOG_WRONGDYN 4030              /* Z88.DYN nicht o.k. */
+#define LOG_MAXKOI 4040                /* MAXKOI */
+#define LOG_MAXK 4050                  /* MAXK */
+#define LOG_MAXE 4060                  /* MAXE */
+#define LOG_MAXNFG 4070                /* MAXNFG */
+#define LOG_MAXNEG 4080                /* MAXNEG */
+#define LOG_OKDYN 4090                 /* Z88.DYN scheint o.k. zu sein */
+#define LOG_ALLOCMEMY 4100             /* Memory anlegen */
+#define LOG_ARRAYNOTOK 4110            /* Memory Kennung I nicht o.k. */
+#define LOG_ARRAYOK 4120               /* Memory Kennung I angelegt */
+#define LOG_SUMMEMY 4130               /* Memory angefordert */
+#define LOG_EXITDYN88D 4140            /* Verlassen DYN88D */
+#define LOG_NOO3 4150                  /* kein Z88O3.TXT */
+#define LOG_NOO5 4160                  /* kein Z88O5.TXT */
+#define LOG_NOO8 4165                  /* kein Z88O8.TXT */
+#define LOG_NOI3 4170                  /* kein Z88I3.TXT */
+#define LOG_REAI3 4180                 /* Lesen Z88I3.TXT */
+#define LOG_RIY88 4190                 /* Start RIY88 */
+#define LOG_NO1Y 4200                  /* kein Z88O1.BNY */
+#define LOG_NO3Y 4210                  /* kein Z88O3.BNY */
+#define LOG_REAO1Y 4220                /* Einlesen Z88O1.BNY */
+#define LOG_REAO3Y 4230                /* Einlesen Z88O3.BNY */
+#define LOG_RIY88OK 4240               /* Verlassen RIY88 */
+#define LOG_SPANNU 4250                /* Spannungen */
+#define LOG_JACNEG 4260                /* Jacobi-Determinate <= 0 */
+#define LOG_EXITZ88D 4270              /* Ende Z88D */
+@

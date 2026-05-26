@@ -1,0 +1,493 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/**********************************************************************
+* Function g3i188 prueft die 3.Eingabegruppe fuer Z88I1.TXT & Z88NI.TXT
+* 9.9.2002 Rieg
+**********************************************************************/
+#ifdef FR_WIN95
+#include <z88v.h>
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+#endif
+
+/***********************************************************************
+* Functions
+***********************************************************************/
+void erif88(HWND hWnd,long izeile);
+
+/***********************************************************************
+* Start G3I188
+***********************************************************************/
+int g3i188(HWND hWnd)
+{
+extern FILE *fdatei;
+
+extern FR_INT4 LANG;
+
+extern FR_INT4AY jtyp;
+extern FR_INT4AY jzeile;
+
+extern FR_INT4 ndim,nkp,ne,nfg,neg,kflag,ibflag,niflag,iwarn,izeile;
+extern FR_INT4 ispann,ipflag,ifnii1;    
+
+FR_INT4 koi[21];
+
+FR_INT4 j,i,k,iele,ityp,jmax,iwarnalt;
+
+int ier;
+int imess;
+
+char *cresult;
+char cline[256], cmess[1024], chead[12];
+
+/**********************************************************************
+* Header vorbelegen
+**********************************************************************/
+if(ifnii1 == 1)
+  strcpy(chead,"Z88NI.TXT");
+else
+  strcpy(chead,"Z88I1.TXT");  
+
+/**********************************************************************
+* Warnungen vorbereiten
+**********************************************************************/
+iwarnalt= iwarn;
+                                   
+/**********************************************************************
+* Schleife ueber alle Elemente
+**********************************************************************/
+for(i = 1;i <= ne;i++)                           /* 80 */
+  {
+  izeile++;
+  jzeile[i]= izeile;
+          
+/*---------------------------------------------------------------------
+* Schreibfehler 1. Zeile 3.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  cresult= fgets(cline,256,fdatei);
+  if(!cresult)
+    {
+    erif88(hWnd,izeile);
+    return(2);
+    }
+
+  ier= sscanf(cline,"%ld %ld",&iele,&ityp);
+  if(ier != 2) 
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",cline,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  jtyp[i]= ityp;
+
+/*---------------------------------------------------------------------
+* ist File z88i3.txt noetig ?
+*--------------------------------------------------------------------*/ 
+  if(ispann == 0)
+    {
+    if(ityp == 1 || ityp == 3  || ityp == 6  || ityp ==  7 ||
+       ityp == 8 || ityp == 10 || ityp == 11 || ityp == 12 ||
+       ityp ==14 || ityp == 15 || ityp == 16 || ityp == 17 ||
+       ityp ==18 || ityp == 19 || ityp == 20) ispann= 1;
+    }
+          
+/*---------------------------------------------------------------------
+* logische Pruefung 1. Zeile 3.Gruppe ?
+*--------------------------------------------------------------------*/ 
+  if(iele != i)
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nElementnummer falsch\n1.Wert in Zeile %ld ueberpruefen",cline,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\nelementnumber wrong\ncheck 1.entry in line %ld",cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+  
+  if(!(ityp >= 1 && ityp <= 20))
+    {
+    if(LANG == 1) sprintf(cmess,
+    "%s\nElementtyp unbekannt\n2.Wert in Zeile %ld ueberpruefen",cline,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+    "%s\nelement type unknown\ncheck 2. entry in line %ld",cline,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+  
+  if((ityp == 2 || ityp == 13) && ibflag != 1)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nBalkenflag in 1.Zeile nicht auf 1 gesetzt. 2.Wert in Zeile %ld ist \
+ein Balken\n7.Wert in 1.Zeile pruefen oder 2.Wert in Zeile %ld pruefen",
+cline,izeile,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nbeam flag in 1st line not set to 1. second entry in line %ld is \
+a beam\ncheck 7th entry in 1st line or check 2nd entry in line %ld",
+cline,izeile,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if((ityp == 18 || ityp == 19 || ityp == 20) && ipflag == 0)
+    {
+    if(LANG == 1) sprintf(cmess,
+"%s\nPlattenflag in 1.Zeile nicht auf 1 oder 2 gesetzt. 2.Wert in Zeile %ld ist \
+eine Platte\n8.Wert in 1.Zeile pruefen oder 2.Wert in Zeile %ld pruefen",
+cline,izeile,izeile);
+
+    if(LANG == 2) sprintf(cmess,
+"%s\nplate flag in 1st line not set to 1. second entry in line %ld is \
+a plate\ncheck 8th entry in 1st line or check 2nd entry in line %ld",
+cline,izeile,izeile);
+
+    MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+    return(2);
+    }
+
+  if(ndim == 3)
+    {
+    if(!(ityp == 1 || ityp == 2  || ityp == 4 ||
+         ityp == 5 || ityp == 10 || ityp == 16 || ityp == 17))
+      {   
+      if(LANG == 1) sprintf(cmess,
+"%s\nElementtyp und Dimension der Struktur nicht in Uebereinstimmung\n\
+1.Wert in Zeile 1 und 2.Wert in Zeile %ld fuer Element %ld ueberpruefen\n\
+2-D Elementtyp in 3-D Struktur eingemischt ?\n\
+Kann evtl. fuer gemischte Strukturen sinnvoll sein .. sorgfaeltig pruefen",
+      cline,izeile,i);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nelement type and dimension of structure do not match\n\
+check 1. entry in line 1 and 2. entry in line %ld for element %ld\n\
+2-D element type mixed in 3-D structure ?\n\
+possibly useful for mixed structures .. check carefully",
+      cline,izeile,i);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONQUESTION);
+      iwarn++;
+      }
+    }
+
+  if(ndim == 2)
+    {
+    if(!(ityp ==  3 || ityp == 6  || ityp == 7  || ityp == 8  ||
+         ityp ==  9 || ityp == 11 || ityp == 12 || ityp == 13 ||
+         ityp == 14 || ityp == 15 || ityp == 18 || ityp == 19 ||
+         ityp == 20))
+      {   
+      if(LANG == 1) sprintf(cmess,
+"%s\nElementtyp und Dimension der Struktur nicht in Uebereinstimmung\n\
+1.Wert in Zeile 1 und 2.Wert in Zeile %ld fuer Element %ld ueberpruefen\n\
+3-D Elementtyp in 2-D Struktur eingemischt ?",cline,izeile,i);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nelement type and dimension of structure do not match\n\
+check 1. entry in line 1 and 2. entry in line %ld for element %ld\n\
+3-D element type mixed in 2-D structure ?",cline,izeile,i);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+/*---------------------------------------------------------------------
+* Koinzidenz
+*--------------------------------------------------------------------*/ 
+  izeile++;
+  cresult= fgets(cline,256,fdatei);
+  if(!cresult)
+    {
+    erif88(hWnd,izeile);
+    return(2);
+    }
+
+  if(ityp == 1  || ityp == 7 || ityp == 8 || ityp == 20)
+    {
+    ier= sscanf(cline,"%ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[1],&koi[2],&koi[3],&koi[4],&koi[5],&koi[6],&koi[7],&koi[8]);
+    if(ier != 8) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 8;
+    }
+
+  else if(ityp == 11 || ityp == 12)
+    {
+    ier= sscanf(cline,
+    "%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[1],&koi[2],&koi[3],&koi[4],&koi[5],&koi[6],
+    &koi[7],&koi[8],&koi[9],&koi[10],&koi[11],&koi[12]);
+    if(ier != 12) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 12;
+    }
+
+  else if(ityp == 10)
+    {
+    ier= sscanf(cline,
+    "%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\
+ %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[ 1],&koi[ 2],&koi[ 3],&koi[ 4],&koi[ 5],
+    &koi[ 6],&koi[ 7],&koi[ 8],&koi[ 9],&koi[10],
+    &koi[11],&koi[12],&koi[13],&koi[14],&koi[15],
+    &koi[16],&koi[17],&koi[18],&koi[19],&koi[20]);
+    if(ier != 20) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 20;
+    }
+
+  else if(ityp == 2 || ityp == 4 || ityp == 5 || ityp == 9 || ityp == 13)
+    {
+    ier= sscanf(cline,"%ld %ld",&koi[1],&koi[2]);
+    if(ier != 2) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 2;
+    }
+
+  else if(ityp == 3 || ityp == 14 || ityp == 15 || ityp == 18)
+    {
+    ier= sscanf(cline,"%ld %ld %ld %ld %ld %ld",
+    &koi[1],&koi[2],&koi[3],&koi[4],&koi[5],&koi[6]);
+    if(ier != 6) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 6;
+    }
+
+  else if(ityp == 16)
+    {
+    ier= sscanf(cline,
+    "%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[ 1],&koi[ 2],&koi[ 3],&koi[ 4],&koi[ 5],
+    &koi[ 6],&koi[ 7],&koi[ 8],&koi[ 9],&koi[10]);
+    if(ier != 10) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 10;
+    }
+
+  else if(ityp == 19)
+    {
+    ier= sscanf(cline,
+    "%ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+    &koi[ 1],&koi[ 2],&koi[ 3],&koi[ 4],&koi[ 5],
+    &koi[ 6],&koi[ 7],&koi[ 8],&koi[ 9],&koi[10],
+    &koi[11],&koi[12],&koi[13],&koi[14],&koi[15],
+    &koi[16]);
+    if(ier != 16) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 16;
+    }
+
+  else if(ityp == 17)
+    {
+    ier= sscanf(cline,"%ld %ld %ld %ld",&koi[1],&koi[2],&koi[3],&koi[4]);
+    if(ier != 4) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 4;
+    }
+
+  else if(ityp == 6)
+    {
+    ier= sscanf(cline,"%ld %ld %ld",&koi[1],&koi[2],&koi[3]);
+    if(ier != 3) 
+      {
+      if(LANG == 1) sprintf(cmess,
+      "%s\nSchreibfehler oder fehlende Daten in Zeile %ld endeckt",
+      cline,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+      "%s\ntyping error or missing entries in line %ld detected",cline,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    jmax= 3;
+    }
+
+/*======================================================================
+* koi(j) innerhalb logischer Grenzen ?
+*=====================================================================*/
+  for(j = 1;j <= jmax;j++)
+    {
+    if(!(koi[j] > 0 && koi[j] <= nkp))
+      {
+      if(LANG == 1) sprintf(cmess,
+"%s\nKnotennummer nicht zwischen 1 und %ld fuer Element %ld entdeckt\n\
+2. Wert in Zeile 1 und %ld. Wert in Zeile %ld pruefen",cline,nkp,i,j,izeile);
+
+      if(LANG == 2) sprintf(cmess,
+"%s\nnode number not in range (1 to %ld) for element %ld detected\n\
+check 2. entry in line 1 and %ld. entry in line %ld",cline,nkp,i,j,izeile);
+
+      MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+      return(2);
+      }
+    }
+
+  for(j = 1;j <= jmax-1;j++)
+    {
+    for(k= j+1;k <= jmax;k++)
+      {
+      if(koi[j] == koi[k])
+        {
+        if(LANG == 1) sprintf(cmess,
+"%s\nIdentische Knoten fuer Element %ld in Zeile %ld entdeckt\n\
+%ld. Wert und %ld. Wert in Zeile %ld ueberpruefen",cline,i,izeile,j,k,izeile);
+
+        if(LANG == 2) sprintf(cmess,
+"%s\nidentical nodes for element %ld in line %ld detected\n\
+check %ld. entry and %ld. entry in line %ld",cline,i,izeile,j,k,izeile);
+
+        MessageBox(NULL, cmess, chead, MB_OK | MB_ICONHAND);
+        return(2);
+        }
+      }
+    }
+                   
+/*---------------------------------------------------------------------
+* Schleifenende
+*--------------------------------------------------------------------*/ 
+  }                                              /* e80 */
+
+/*----------------------------------------------------------------------
+* ggf. warnen
+*---------------------------------------------------------------------*/
+if(iwarn > iwarnalt)
+  {
+  if(LANG == 1) strcpy(cmess,"Weiterchecken ?");
+  if(LANG == 2) strcpy(cmess,"continue with check ?");
+  imess= MessageBox(NULL,cmess,chead,MB_YESNO | MB_ICONQUESTION);
+  if(imess == IDNO)  return(1);
+  }
+
+/**********************************************************************
+* Normales Ende
+**********************************************************************/
+return(0);
+}
+

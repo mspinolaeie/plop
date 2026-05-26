@@ -1,0 +1,215 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  Function pgpp88 plottet die Spannungen an den Gausspunkten
+*  23.3.2002 Rieg
+***********************************************************************/
+
+/*----------------------------------------------------------------------
+* WindowsNT und 95
+*---------------------------------------------------------------------*/
+#ifdef FR_WIN95
+#include <z88p.h>
+#include <stdio.h>   /* fprintf */
+#include <string.h>  /* strcpy */
+#endif
+
+/*----------------------------------------------------------------------
+* UNIX
+*---------------------------------------------------------------------*/
+#ifdef FR_UNIX
+#include <z88p.h>
+#include <stdio.h>   /* fprintf */
+#include <string.h>  /* strcpy */
+#endif
+
+/***********************************************************************
+* Start Function pgpp88
+***********************************************************************/
+int pgpp88(void)
+{
+extern FILE *f2;
+
+extern FR_DOUBLEAY siggp;
+
+extern FR_DOUBLE spamax,spamin,spainc;
+
+extern FR_INT4 LANG;
+
+extern FR_INT4AY kgpx;
+extern FR_INT4AY kgpy;
+
+extern FR_INT4 isflag,igpanz;
+
+FR_INT4 ipxmin,ipxmax,ipymin,ipymax;
+FR_INT4 ifacz,ioffz,ioffl,ioffp,ioffr;
+FR_INT4 ix,iy;
+
+FR_INT4 ispa[12];
+
+FR_INT4 jspa,kspa,i;
+
+static char color[11]= {'X','A','B','C','D','E','F','G','H','I','J'};  
+char cvon[5],cbis[5],cgeh[30],ct,ccol;
+
+/***********************************************************************
+*  strings festlegen
+***********************************************************************/
+if(LANG == 1) 
+  {
+  strcpy(cvon,"VON");
+  strcpy(cbis,"BIS");     
+  strcpy(cgeh,"VERGLEICHSSPANNUNGEN NACH GEH");
+  }
+
+if(LANG == 2) 
+  {
+  strcpy(cvon,"FROM");
+  strcpy(cbis,"TO");     
+  strcpy(cgeh,"VON MISES STRESSES");
+  }
+
+ct= 0x003;        
+                
+/***********************************************************************
+*  festlegen der scale-faktoren
+***********************************************************************/
+ipxmin=  250;
+ipxmax=10250;
+ipymin=  279;
+ipymax= 7479; 
+
+ioffl=  1000;
+ioffp=  1100;
+ioffr=   100;
+        
+ifacz=   650;
+ioffz=  1000;
+        
+/***********************************************************************
+*  pen festlegen
+***********************************************************************/
+fprintf(f2,"SP2;SI0.125,0.2;\n");
+
+/***********************************************************************
+*  unterteilung
+***********************************************************************/
+fprintf(f2,"PU;PA%ld,%ld;PD;\n",ipxmin+ioffl,ipymin);
+fprintf(f2,"PA%ld,%ld;PU;\n",ipxmin+ioffl,ipymax); 
+        
+/***********************************************************************
+*  aufteilen
+***********************************************************************/
+ispa[1]= (FR_INT4)(spamin);
+ispa[2]= (FR_INT4)(spamin+    spainc);
+ispa[3]= (FR_INT4)(spamin+ 2.*spainc);
+ispa[4]= (FR_INT4)(spamin+ 3.*spainc);
+ispa[5]= (FR_INT4)(spamin+ 4.*spainc);
+ispa[6]= (FR_INT4)(spamin+ 5.*spainc);
+ispa[7]= (FR_INT4)(spamin+ 6.*spainc);
+ispa[8]= (FR_INT4)(spamin+ 7.*spainc);
+ispa[9]= (FR_INT4)(spamin+ 8.*spainc);
+ispa[10]=(FR_INT4)(spamin+ 9.*spainc);
+ispa[11]=(FR_INT4)(spamax);
+        
+for( i= 1; i<= igpanz;i++)
+  {        
+  jspa= (FR_INT4)siggp[i];
+           
+  if     (jspa >= ispa[1] && jspa < ispa[2])  ccol= color[1]; 
+  else if(jspa >= ispa[2] && jspa < ispa[3])  ccol= color[2];
+  else if(jspa >= ispa[3] && jspa < ispa[4])  ccol= color[3];
+  else if(jspa >= ispa[4] && jspa < ispa[5])  ccol= color[4];
+  else if(jspa >= ispa[5] && jspa < ispa[6])  ccol= color[5];
+  else if(jspa >= ispa[6] && jspa < ispa[7])  ccol= color[6];
+  else if(jspa >= ispa[7] && jspa < ispa[8])  ccol= color[7];
+  else if(jspa >= ispa[8] && jspa < ispa[9])  ccol= color[8];
+  else if(jspa >= ispa[9] && jspa < ispa[10]) ccol= color[9];
+  else                                        ccol= color[10];
+
+  ix= kgpx[i];
+  iy= kgpy[i];
+
+  if(ix >= (ipxmin+ioffp) && ix <= (ipxmax-ioffr) &&
+     iy >= (ipymin+ioffr) && iy <= (ipymax-ioffr))
+     fprintf(f2,"PA%ld,%ld;LB%c%c\n",ix,iy,ccol,ct);
+          
+  }
+
+/***********************************************************************
+*  palette mit beschriftung zeichnen
+***********************************************************************/
+fprintf(f2,"SI0.19,0.3;\n");
+fprintf(f2,"DI0,1;\n");
+        
+ix= 500;
+iy= 400;
+if(isflag== 1)
+  fprintf(f2,"PA%ld,%ld;LB%s%c\n",ix,iy,cgeh,ct);
+
+ix= 700;
+fprintf(f2,"PA%ld,%ld;LB%s%c\n",ix,iy,cvon,ct);
+ix= 1100;
+fprintf(f2,"PA%ld,%ld;LB%s%c\n",ix,iy,cbis,ct);
+
+ix= 700;
+for (i= 1; i <= 10; i++)
+  {
+  iy= ioffz + (i-1)*ifacz;
+  fprintf(f2,"PA%ld,%ld;LB%ld%c\n",ix,iy,ispa[i],ct);
+  }
+
+ix= 900;
+for (i= 1; i <= 10; i++)
+  {
+  iy= ioffz + (i-1)*ifacz;
+  fprintf(f2,"PA%ld,%ld;LB%c%c\n",ix,iy,color[i],ct);
+  }
+
+ix= 1100;
+for (i= 1; i <= 10; i++)
+  {
+  kspa= ispa[i+1]-1;
+  iy= ioffz + (i-1)*ifacz;
+  fprintf(f2,"PA%ld,%ld;LB%ld%c\n",ix,iy,kspa,ct);
+  }
+
+fprintf(f2,"PA250,279;LB*%c;PU;\n",ct);
+
+fprintf(f2,"DI1,0;\n");
+        
+return 0;
+}

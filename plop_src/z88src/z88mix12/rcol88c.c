@@ -1,0 +1,271 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the UNIX OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any UNIX OS and Motif 2.0.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+* RCOL88C fuer Z88COM- UNIX: Farben einlesen
+* 23.3.2002 Rieg
+***********************************************************************/
+
+/***********************************************************************
+* UNIX
+***********************************************************************/
+#ifdef FR_UNIX
+#include <z88com.h>
+#include <stdio.h>   /* fopen,fclose,fgets */
+#include <string.h>  /* strstr */
+#endif
+
+/***********************************************************************
+* Functions
+***********************************************************************/
+int wlog88c(FR_INT4,int);
+
+/***********************************************************************
+* Start rcol88c
+***********************************************************************/
+int rcol88c(void)
+{
+
+FILE *fcol;
+
+extern int IBELL;
+
+extern int IX_WINDOW,IY_WINDOW,IW_WINDOW,IH_WINDOW;
+extern int IX_EDITIN,IY_EDITIN,IW_EDITIN,IH_EDITIN;
+extern int IX_EDITOUT,IY_EDITOUT,IW_EDITOUT,IH_EDITOUT;
+extern int IX_FEA,IY_FEA,IW_FEA,IH_FEA;
+extern int IX_CAD,IY_CAD,IW_CAD,IH_CAD;
+extern int IX_PLOT,IY_PLOT,IW_PLOT,IH_PLOT;
+extern int IX_MAIN,IY_MAIN,IW_MAIN,IH_MAIN;
+extern int IX_TITLE,IY_TITLE,IW_TITLE,IH_TITLE;
+extern int IX_PROC,IY_PROC,IW_PROC,IH_PROC;
+extern int IX_START,IY_START,IW_START,IH_START;
+extern int IX_ITER,IY_ITER,IW_ITER,IH_ITER,NC_ITER;
+extern int IX_STATUS,IY_STATUS,IW_STATUS,IH_STATUS;
+
+extern char CEDITOR[], CBROWSER[], CPREFIX[];
+
+extern char CF_FLARGE[],CF_FSMALL[],CF_ENTRIES[];
+
+extern char CO_FOREGR[],CO_BACKGR[],CO_ENTRIES[];
+
+char cline[256], cdummy[80];
+
+/*----------------------------------------------------------------------
+* Color- datei z88.fcd oeffnen
+*---------------------------------------------------------------------*/
+fcol= fopen("z88.fcd","rb"); /* fcd = fonts, colors, dimensions       */
+
+if(fcol == NULL)
+  {
+  wlog88c(0,LOG_NOCOL);
+  return(AL_NOCOL);
+  }
+rewind(fcol);
+
+/*----------------------------------------------------------------------
+* Color- datei z88.fcd lesen
+*---------------------------------------------------------------------*/
+do
+  if(fgets(cline,256,fcol)== NULL) break;
+while( (strstr(cline,"Z88COM START"))== NULL);
+
+if( (strstr(cline,"Z88COM START"))!= NULL)              /* File */
+  {
+  do
+    {
+    fgets(cline,80,fcol);
+
+    if( (strstr(cline,"WINDOW START"))!= NULL) 
+      {
+      do
+        {
+        fgets(cline,80,fcol);
+
+        if( (strstr(cline,"CEDITOR"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CEDITOR);
+        if( (strstr(cline,"CBROWSER"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CBROWSER);
+        if( (strstr(cline,"CPREFIX"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CPREFIX);
+          
+        if( (strstr(cline,"IBELL"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IBELL);
+
+        if( (strstr(cline,"CF_FLARGE"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CF_FLARGE);
+        if( (strstr(cline,"CF_FSMALL"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CF_FSMALL);
+        if( (strstr(cline,"CF_ENTRIES"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CF_ENTRIES);
+
+        if( (strstr(cline,"CO_FOREGR"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CO_FOREGR);
+        if( (strstr(cline,"CO_BACKGR"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CO_BACKGR);
+        if( (strstr(cline,"CO_ENTRIES"))!= NULL) 
+          sscanf(cline,"%s %s",cdummy,CO_ENTRIES);
+
+        if( (strstr(cline,"IX_WINDOW"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_WINDOW);
+        if( (strstr(cline,"IY_WINDOW"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_WINDOW);
+        if( (strstr(cline,"IW_WINDOW"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_WINDOW);
+        if( (strstr(cline,"IH_WINDOW"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_WINDOW);
+
+        if( (strstr(cline,"IX_EDITIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_EDITIN);
+        if( (strstr(cline,"IY_EDITIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_EDITIN);
+        if( (strstr(cline,"IW_EDITIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_EDITIN);
+        if( (strstr(cline,"IH_EDITIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_EDITIN);
+
+        if( (strstr(cline,"IX_EDITOUT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_EDITOUT);
+        if( (strstr(cline,"IY_EDITOUT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_EDITOUT);
+        if( (strstr(cline,"IW_EDITOUT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_EDITOUT);
+        if( (strstr(cline,"IH_EDITOUT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_EDITOUT);
+
+        if( (strstr(cline,"IX_FEA"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_FEA);
+        if( (strstr(cline,"IY_FEA"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_FEA);
+        if( (strstr(cline,"IW_FEA"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_FEA);
+        if( (strstr(cline,"IH_FEA"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_FEA);
+
+        if( (strstr(cline,"IX_CAD"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_CAD);
+        if( (strstr(cline,"IY_CAD"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_CAD);
+        if( (strstr(cline,"IW_CAD"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_CAD);
+        if( (strstr(cline,"IH_CAD"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_CAD);
+
+        if( (strstr(cline,"IX_PLOT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_PLOT);
+        if( (strstr(cline,"IY_PLOT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_PLOT);
+        if( (strstr(cline,"IW_PLOT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_PLOT);
+        if( (strstr(cline,"IH_PLOT"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_PLOT);
+
+        if( (strstr(cline,"IX_MAIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_MAIN);
+        if( (strstr(cline,"IY_MAIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_MAIN);
+        if( (strstr(cline,"IW_MAIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_MAIN);
+        if( (strstr(cline,"IH_MAIN"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_MAIN);
+
+        if( (strstr(cline,"IX_TITLE"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_TITLE);
+        if( (strstr(cline,"IY_TITLE"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_TITLE);
+        if( (strstr(cline,"IW_TITLE"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_TITLE);
+        if( (strstr(cline,"IH_TITLE"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_TITLE);
+
+        if( (strstr(cline,"IX_PROC"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_PROC);
+        if( (strstr(cline,"IY_PROC"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_PROC);
+        if( (strstr(cline,"IW_PROC"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_PROC);
+        if( (strstr(cline,"IH_PROC"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_PROC);
+
+        if( (strstr(cline,"IX_START"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_START);
+        if( (strstr(cline,"IY_START"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_START);
+        if( (strstr(cline,"IW_START"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_START);
+        if( (strstr(cline,"IH_START"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_START);
+
+#ifdef FR_COMX
+        if( (strstr(cline,"IX_ITER"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_ITER);
+        if( (strstr(cline,"IY_ITER"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_ITER);
+        if( (strstr(cline,"IW_ITER"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_ITER);
+        if( (strstr(cline,"IH_ITER"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_ITER);
+        if( (strstr(cline,"NC_ITER"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&NC_ITER);
+#endif
+
+        if( (strstr(cline,"IX_STATUS"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IX_STATUS);
+        if( (strstr(cline,"IY_STATUS"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IY_STATUS);
+        if( (strstr(cline,"IW_STATUS"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IW_STATUS);
+        if( (strstr(cline,"IH_STATUS"))!= NULL) 
+          sscanf(cline,"%s %d",cdummy,&IH_STATUS);
+        }
+      while( (strstr(cline,"WINDOW END"))== NULL);
+      }         
+
+    }
+  while( (strstr(cline,"Z88COM END"))== NULL);     
+    
+  }             
+  else
+  {
+  wlog88c(0,LOG_WRONGCOL);
+  return(AL_WRONGCOL);
+  }  
+
+/*----------------------------------------------------------------------
+* korrekt gelesen, file fcol schliessen
+*---------------------------------------------------------------------*/
+fclose(fcol);
+return (0);
+}

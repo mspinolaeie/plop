@@ -1,0 +1,223 @@
+/***********************************************************************
+* 
+*               *****   ***    ***
+*                  *   *   *  *   *
+*                 *     ***    ***
+*                *     *   *  *   *
+*               *****   ***    ***
+*
+* A FREE Finite Elements Analysis Program in ANSI C for the Windows OS.
+*
+* Composed and edited and copyright by 
+* Professor Dr.-Ing. Frank Rieg, University of Bayreuth, Germany
+*
+* eMail: 
+* frank.rieg@uni-bayreuth.de
+* dr.frank.rieg@t-online.de
+* 
+* V10.0  December 12, 2001
+*
+* Z88 should compile and run under any Windows release, starting
+* with Windows95.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; see the file COPYING.  If not, write to
+* the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+***********************************************************************/ 
+/***********************************************************************
+*  function vgpp88 plottet die spannungen an den gausspunkten
+*  16.9.2002 Rieg
+***********************************************************************/
+/*****************************************************************************
+* WindowsNT und 95
+*****************************************************************************/
+#ifdef FR_WIN95
+#include <z88p.h>
+#include <windows.h>
+#include <stdlib.h>  /* itoa */
+#include <string.h>  /* strlen,strcpy */
+#include <math.h>    /* fabs */
+#endif
+
+/***********************************************************************
+*  Start vgpp88
+***********************************************************************/
+int vgpp88(HDC hDC)
+{
+extern FR_DOUBLEAY siggp;
+extern double spamax,spamin,spainc;
+
+extern FR_INT4 LANG;
+
+extern FR_INT4AY kgpx;
+extern FR_INT4AY kgpy;
+
+extern FR_INT4 isflag,igpanz;
+
+extern int ibUnver;
+
+extern short ixClient, iyClient;
+
+extern BYTE ifarbe[];
+
+HPEN hPen[12];
+ 
+COLORREF icolor[12];
+
+size_t laenge;
+
+int ispa[12];
+
+int jspa,ix,iy,i;
+
+char cispa[10];        
+
+static char *cblock[]= 
+{"000","***","***","***","***","***","***","***","***","***","***" };
+
+char cvon[5],cbis[5],cgeh[30];
+
+/***********************************************************************
+*  strings festlegen
+***********************************************************************/
+if(LANG == 1) 
+  {
+  strcpy(cvon,"von");
+  strcpy(cbis,"bis");     
+  strcpy(cgeh,"Vergleichspannungen nach GEH");
+  }
+
+if(LANG == 2) 
+  {
+  strcpy(cvon,"from");
+  strcpy(cbis,"to");     
+  strcpy(cgeh,"von Mises Stresses");
+  }
+
+/**********************************************************************
+* los gehts
+**********************************************************************/
+icolor[1] = RGB(ifarbe[12],ifarbe[13],ifarbe[14]);
+icolor[2] = RGB(ifarbe[15],ifarbe[16],ifarbe[17]);
+icolor[3] = RGB(ifarbe[18],ifarbe[19],ifarbe[20]);
+icolor[4] = RGB(ifarbe[21],ifarbe[22],ifarbe[23]);
+icolor[5] = RGB(ifarbe[24],ifarbe[25],ifarbe[26]);
+icolor[6] = RGB(ifarbe[27],ifarbe[28],ifarbe[29]);
+icolor[7] = RGB(ifarbe[30],ifarbe[31],ifarbe[32]);
+icolor[8] = RGB(ifarbe[33],ifarbe[34],ifarbe[35]);
+icolor[9] = RGB(ifarbe[36],ifarbe[37],ifarbe[38]);
+icolor[10]= RGB(ifarbe[39],ifarbe[40],ifarbe[41]);
+
+for (i=1; i<=10; i++)
+  hPen[i]= CreatePen(PS_SOLID,ibUnver,icolor[i]);
+
+/**********************************************************************
+* aufteilen
+**********************************************************************/
+ispa[1]= (int)(spamin);
+ispa[2]= (int)(spamin+    spainc);
+ispa[3]= (int)(spamin+ 2.*spainc);
+ispa[4]= (int)(spamin+ 3.*spainc);
+ispa[5]= (int)(spamin+ 4.*spainc);
+ispa[6]= (int)(spamin+ 5.*spainc);
+ispa[7]= (int)(spamin+ 6.*spainc);
+ispa[8]= (int)(spamin+ 7.*spainc);
+ispa[9]= (int)(spamin+ 8.*spainc);
+ispa[10]=(int)(spamin+ 9.*spainc);
+ispa[11]=(int)(spamax);
+        
+/**********************************************************************
+* Markierung setzen
+**********************************************************************/
+for( i= 1; i<= igpanz;i++)
+  {        
+  jspa= (int)siggp[i];
+           
+  if     (jspa >= ispa[1] && jspa < ispa[2]) SelectObject(hDC,hPen[1]); 
+  else if(jspa >= ispa[2] && jspa < ispa[3]) SelectObject(hDC,hPen[2]); 
+  else if(jspa >= ispa[3] && jspa < ispa[4]) SelectObject(hDC,hPen[3]); 
+  else if(jspa >= ispa[4] && jspa < ispa[5]) SelectObject(hDC,hPen[4]); 
+  else if(jspa >= ispa[5] && jspa < ispa[6]) SelectObject(hDC,hPen[5]); 
+  else if(jspa >= ispa[6] && jspa < ispa[7]) SelectObject(hDC,hPen[6]); 
+  else if(jspa >= ispa[7] && jspa < ispa[8]) SelectObject(hDC,hPen[7]); 
+  else if(jspa >= ispa[8] && jspa < ispa[9]) SelectObject(hDC,hPen[8]); 
+  else if(jspa >= ispa[9] && jspa < ispa[10])SelectObject(hDC,hPen[9]); 
+  else                                       SelectObject(hDC,hPen[10]); 
+          
+  MoveToEx(hDC,kgpx[i]-1,kgpy[i]-1,NULL);
+  LineTo(  hDC,kgpx[i]+1,kgpy[i]-1);
+  MoveToEx(hDC,kgpx[i]-1,kgpy[i] ,NULL);
+  LineTo(  hDC,kgpx[i]+1,kgpy[i] );
+  MoveToEx(hDC,kgpx[i]-1,kgpy[i]+1,NULL);
+  LineTo(  hDC,kgpx[i]+1,kgpy[i]+1);
+  }        
+
+/***********************************************************************
+*  palette mit beschriftung zeichnen
+***********************************************************************/
+SetTextAlign(hDC,TA_LEFT | TA_TOP | TA_NOUPDATECP);
+
+SetTextColor(hDC,RGB(0,0,254));
+
+ix= 10;
+iy= iyClient-60;
+if(isflag == 1L) 
+  {
+  laenge= strlen(cgeh);
+  TextOut(hDC,ix,iy,cgeh,laenge);
+  }
+
+ix= 10;
+iy= iyClient-45;
+laenge= strlen(cvon);
+TextOut(hDC,ix,iy,cvon,laenge);
+
+iy= iyClient-30; 
+for(i= 1; i<= 10; i++)
+  {
+  ix=  50+(i-1)*50;
+  SetTextColor(hDC,icolor[i]);
+  TextOut(hDC,ix,iy,cblock[i],3);
+  }
+
+SetTextColor(hDC,RGB(0,0,254));
+ix= 10;
+iy= iyClient-15;
+laenge= strlen(cbis);
+TextOut(hDC,ix,iy,cbis,laenge);
+
+SetTextColor(hDC,RGB(0,0,128));
+
+iy= iyClient-45;
+for(i= 1; i<= 10; i++)
+  {
+  ix=  50+(i-1)*50;
+  itoa(ispa[i],cispa,10);
+  laenge= strlen(cispa);
+  TextOut(hDC,ix,iy,cispa,laenge);
+  }
+
+iy= iyClient-15;
+for(i= 1; i<= 10; i++)
+  {
+  ix=  50+(i-1)*50;
+  itoa((ispa[i+1]-1),cispa,10);
+  laenge= strlen(cispa);
+  TextOut(hDC,ix,iy,cispa,laenge);
+  }
+
+for (i=1; i<=10; i++) DeleteObject(hPen[i]);
+
+return 0;
+}
+
