@@ -43,3 +43,17 @@ cmake --build build
 ```
 
 This produces `build/bin/plop_gui_qt.exe`. The Qt GUI uses app-relative runtime files and `QSettings`; it does not depend on the legacy installer registry keys.
+
+One local Windows path that is known to work is `aqtinstall` plus the official Qt MinGW toolchain:
+
+```powershell
+py -m pip install --user aqtinstall
+py -m aqt install-qt -O $env:USERPROFILE\Qt windows desktop 6.8.3 win64_mingw
+py -m aqt install-tool -O $env:USERPROFILE\Qt windows desktop tools_mingw1310 qt.tools.win64_mingw1310
+```
+
+After that, the repository includes a helper script that configures, builds, and deploys the Qt runtime:
+
+```powershell
+.\build-local-qt.ps1
+```

@@ -33,8 +33,9 @@
 
 #include <memory>
 
-#include "plop_parms.h"
+#include "global.h"
 #include "plot.h"
+#include "plop_parms.h"
 
 namespace {
 

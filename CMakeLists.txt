@@ -134,7 +134,7 @@ endif()
 if(PLOP_BUILD_QT_GUI)
   find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Gui Widgets QUIET)
   if(QT_FOUND)
-    find_package(${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets)
 
     add_executable(plop_gui_qt
       "${PLOP_GUI_DIR}/main.cpp"

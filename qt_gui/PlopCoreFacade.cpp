@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QFile>
 #include <QPainter>
+#include <QPainterPath>
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QTemporaryFile>
@@ -15,12 +16,13 @@
 #include <cstring>
 
 #include "global.h"
+#include "plot.h"
+#include "parm_types.h"
 #include "grid_gen.h"
 #include "plate_global.h"
 #include "plop_debug.h"
 #include "plop_parms.h"
 #include "plop_parser.h"
-#include "plot.h"
 
 void init_plop(void);
 void alloc_globals(void);
