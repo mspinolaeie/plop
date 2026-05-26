@@ -885,9 +885,8 @@ void load_z88_deflection_data (int n_mesh_depth)
 	int inode;
 	double dx, dy, dz;
 	double x, y;
-#ifdef gui_plop
 	char str [100];
-
+#ifdef gui_plop
 	LockPlopData (9);
 	sprintf (str, "start load_z88 %g %g\n", plate_plot_z_displacement [0], plate_z_displacement [0]);
 	DebugMsg (str);
@@ -1308,7 +1307,8 @@ void write_picture (
 
 
 void write_picture (
-	char *pic_name)
+	char *pic_name,
+	plop_cmap *pcm)
 {
 	int i;
 	int j;

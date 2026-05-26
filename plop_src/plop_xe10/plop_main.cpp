@@ -62,8 +62,10 @@ void calc_rms (void);
 void init_global_graphics (void);
 void plate_init (void);
 void init_graphics (void);
-void calculate_plot (int);
+void calculate_plop_plot (int, double *, double *, double *, double *);
 void write_picture (char *, plop_cmap *);
+void print_plate (char *);
+void print_pic (int, char *);
 
 void copy_plot_data (void);
 
@@ -92,7 +94,7 @@ extern void UpdateMonteDisplay (int, double, double);
 extern void LockPlopData (int);
 extern void UnlockPlopData (void);
 
-extern void DebugMsg (char *);
+extern void DebugMsg (const char *);
 
 #endif
 
@@ -107,27 +109,8 @@ void *malloc_or_die (int, const char *);
 
 
 
-void prompt_exit (void)
-{	char line [max_line_len];
-
-#ifdef __BORLANDC__
-    printf ("Type <enter> to exit Plop\n");
-    gets (line);
-#endif
-    exit (0);
-}
-
-void err_msg (char *msg)
-{	fprintf (stderr, msg);
-}
-
-void warn_msg (char *msg)
-{	fprintf (stderr, msg);
-}
-
-
 #ifdef standalone_grid_gen
-main (
+int main (
 	int argc,
 	char *argv [])
 {
@@ -162,6 +145,7 @@ main (
 	if (argc > 3)
 		print_pic (have_pic_mesh, argv [3]);
 
+	return 0;
 }
 #else
 
@@ -469,7 +453,7 @@ void prompt_for_command (void)
  * -Dname			debug
  */
 
-main (
+int main (
 	int argc,
 	char **argv)
 {	int i;
@@ -517,18 +501,18 @@ main (
     	copy_plot_data ();
 
 	if (have_plot)
-	{  	calculate_plop_plot (0, &plate_plot_z_min, &plate_plot_z_max);
+	{  	calculate_plop_plot (0, &plate_plot_z_min, &plate_plot_z_max, &plate_err_vis_rms, &plate_err_vis_p_v);
 		write_picture (plotfile, &color_cmap);
     }
 
     if (have_contour_plot)
-	{  	calculate_plop_plot (1, &plate_plot_z_min, &plate_plot_z_max);
+	{  	calculate_plop_plot (1, &plate_plot_z_min, &plate_plot_z_max, &plate_err_vis_rms, &plate_err_vis_p_v);
         write_picture (contourplotfile, &contour_cmap);
     }
 
 	if (verbose)
     	printf ("memory usage: %d\n", total_mem_alloced);
 
-	prompt_exit ();
+	return 0;
 }
 #endif

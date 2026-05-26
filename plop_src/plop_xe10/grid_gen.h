@@ -75,12 +75,7 @@ extern double diameter;
 
 extern int please_stop_plop;
 
-#ifdef gui_plop
-extern void terminate_plop (void);
-#else
-void terminate_plop (void)
-{}
-#endif
+void terminate_plop (void);
 
 
 extern double parab_a0;			/* coefficients of parabola for thickness vs. radius */

@@ -30,6 +30,7 @@ void add_debug (const char *s);
 /* depending on gui or standalone will implement appropriately */
 void err_msg (const char *s);
 void warn_msg (const char *s);
+void prompt_exit (void);
 
 #define debug_grid_gen		debugs [0]
 #define debug_opt			debugs [1]

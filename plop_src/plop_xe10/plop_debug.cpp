@@ -53,7 +53,7 @@ void err_msg_dd (const char *msg, int arg1, int arg2)
 	err_msg (str);
 }
 
-void err_msg_ds (const char *msg, int arg1, char *arg2)
+void err_msg_ds (const char *msg, int arg1, const char *arg2)
 {	char str [max_line_len];
 
 	sprintf (str, msg, arg1, arg2);

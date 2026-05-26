@@ -82,73 +82,6 @@ void *malloc_or_die (int, const char *);
 
 
 
-extern void err_msg (const char *msg);
-extern void warn_msg (const char *msg);
-extern void prompt_exit (void);
-
-void err_msg_s (char *msg, char *arg1)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1);
-    err_msg (str);
-}
-
-void warn_msg_s (const char *msg, const char *arg1)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1);
-    warn_msg (str);
-}
-
-void err_msg_ss (const char *msg, const char *arg1, const char *arg2)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1, arg2);
-    err_msg (str);
-}
-
-void err_msg_d (const char *msg, int arg1)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1);
-    err_msg (str);
-}
-
-void err_msg_dd (const char *msg, int arg1, int arg2)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1, arg2);
-    err_msg (str);
-}
-
-void err_msg_ds (const char *msg, int arg1, const char *arg2)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1, arg2);
-    err_msg (str);
-}
-
-void err_msg_g (const char *msg, double arg1)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1);
-    err_msg (str);
-}
-
-void err_msg_dg (char *msg, int arg1, double arg2)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1, arg2);
-    err_msg (str);
-}
-
-void err_msg_gd (char *msg, double arg1, int arg2)
-{	char str [max_line_len];
-
-	sprintf (str, msg, arg1, arg2);
-    err_msg (str);
-}
-
 void getwords (
 	char *line,
 	char wordtable [maxwords] [wordlen],
@@ -1245,6 +1178,7 @@ void print_pic (
 #else
 
 void print_pic (
+	int mesh_flag,
 	char *pic_name)
 {	int i;
 	int j;
@@ -1261,18 +1195,24 @@ void print_pic (
 
 	scale = 7.0 / diameter;
 	fprintf (pic_file, ".PS\n");
-	for (i = 0; i < n_triangles; i++)
-	{	for (j = 0; j < tri_pts; j++)
-		{	polar_to_euc (point_radius [triangle_points [i] [j]],
-					point_angle [triangle_points [i] [j]], &xs, &ys);
-			polar_to_euc (point_radius [triangle_points [i] [(j + 1) %tri_pts]],
-					point_angle [triangle_points [i] [(j + 1) %tri_pts]], &xe, &ye);
-			xs *= scale;
-			ys *= scale;
-			xe *= scale;
-			ye *= scale;
-			fprintf (pic_file, "line from %g,%g to %g,%g\n", xs, ys, xe, ye);
+	if (mesh_flag)
+	{	for (i = 0; i < n_triangles; i++)
+		{	for (j = 0; j < tri_pts; j++)
+			{	polar_to_euc (point_radius [triangle_points [i] [j]],
+						point_angle [triangle_points [i] [j]], &xs, &ys);
+				polar_to_euc (point_radius [triangle_points [i] [(j + 1) %tri_pts]],
+						point_angle [triangle_points [i] [(j + 1) %tri_pts]], &xe, &ye);
+				xs *= scale;
+				ys *= scale;
+				xe *= scale;
+				ye *= scale;
+				fprintf (pic_file, "line from %g,%g to %g,%g\n", xs, ys, xe, ye);
+			}
 		}
+	}
+	else
+	{	fprintf (pic_file, "arc at 0,0 wid %g ht %g from 0 to 360\n",
+			diameter * scale, diameter * scale);
 	}
 	for (i = 0; i < n_supports; i++)
 	{

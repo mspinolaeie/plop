@@ -276,13 +276,14 @@ double eval_error (
 	return (error);
 }
 
+static double plop_rand_unit (void)
+{
 #ifdef __BORLANDC__
-
-double drand48 (void)
-{	return ((double) random (0x7fffffff) / (double) (0x7fffffff));
-}
-
+	return ((double) random (0x7fffffff) / (double) (0x7fffffff));
+#else
+	return ((double) rand () / (double) RAND_MAX);
 #endif
+}
 
 void run_monte (void)
 {	int i;
@@ -305,7 +306,7 @@ void run_monte (void)
     for(i = 0; i < n_monte_tests && !please_stop_plop; i++)
     {	fprintf (output_file, "monte ");
     	for (j = 0; j < n_monte_vars; j++)
-    	{	x = (2 * drand48 () - 1) * monte_var_delta [j] + start_vals [j];
+    	{	x = (2 * plop_rand_unit () - 1) * monte_var_delta [j] + start_vals [j];
         	if (monte_var_is_var [j])
             {	var_table [monte_var_which [j]].value = x;
             	basis_changed |= var_table [monte_var_which [j]].affects_basis;

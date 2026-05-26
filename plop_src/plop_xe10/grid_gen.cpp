@@ -9,7 +9,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef gui_plop
 #include <System.SysUtils.hpp>
+#endif
 
 #include "global.h"
 
@@ -27,8 +29,10 @@
 #include "gd.h"
 #endif
 
+#ifdef gui_plop
 wchar_t* __fastcall UnicodeOf(const char* c);
 char* __fastcall AnsiOf(wchar_t* w);
+#endif
 
 
 
@@ -380,9 +384,8 @@ double rint (double x)
 #endif
 
 
-extern void err_msg (char *msg);
-extern void warn_msg (char *msg);
-extern void prompt_exit (void);
+extern void err_msg (const char *msg);
+extern void warn_msg (const char *msg);
 
 typedef struct {
 	double x_cg, y_cg;
@@ -1699,9 +1702,9 @@ void gen_z88_input (void) {
 	sprintf (z88_struct_file_name, "%s%s", tmpname, z88_struct_file_name_base);
 	sprintf (z88_load_file_name, "%s%s", tmpname, z88_load_file_name_base);
 	sprintf (z88_deflection_file_name, "%s%s", tmpname, z88_deflection_file_name_base);
-	DeleteFile (UnicodeOf (z88_struct_file_name));
-	DeleteFile (UnicodeOf (z88_load_file_name));
-	DeleteFile (UnicodeOf (z88_deflection_file_name));
+	remove (z88_struct_file_name);
+	remove (z88_load_file_name);
+	remove (z88_deflection_file_name);
 
 	write_z88_structure ();
 	write_z88_loads ();
