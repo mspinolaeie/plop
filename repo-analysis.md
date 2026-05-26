@@ -4,7 +4,14 @@
 
 This repository is a legacy Windows desktop application for mirror support analysis. It is not organized like a modern actively maintained software project; it is closer to a source archive plus packaging assets.
 
-The primary user-facing deliverable is the Windows installer for `Gui Plop`, not a reproducible source build. The repository contains:
+That said, the repository is no longer limited to the historical installer flow. It now also has a working local Windows build path based on:
+
+- CMake
+- MinGW
+- a Qt Widgets frontend for local builds
+- source-built Z88 helper executables
+
+Historically, the primary user-facing deliverable was the Windows installer for `Gui Plop`. The repository contains:
 
 - a core Plop computation codebase in `plop_src/plop_xe10`
 - a bundled/adapted Z88 source tree in `plop_src/z88src/z88mix12`

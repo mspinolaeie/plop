@@ -1,59 +1,73 @@
 # plop
-This is the repository for plop.
-Download the gui_plop_setup_3_0_7.exe from the release and execute it. Current version is 3.0.7.
 
-https://github.com/davidlewistoronto/plop/releases/download/3.0.7/gui_plop_setup_3_0_7.exe
+`plop` is a legacy desktop application for mirror support analysis.
 
+The repository still contains the original Windows installer/release flow, but it now also supports a reproducible local build on Windows with:
 
-If you just want to learn more about plop, download the manual in the link
+- MinGW + CMake for the legacy numerical core
+- Qt Widgets for the new local GUI frontend
+- bundled Z88 executables built from source
 
-https://github.com/davidlewistoronto/plop/blob/main/GuiPlop%20Users%20Manual.pdf
+## Main paths
 
+- end-user manual: [GuiPlop Users Manual.pdf](GuiPlop%20Users%20Manual.pdf)
+- repository analysis: [repo-analysis.md](repo-analysis.md)
+- legacy GUI module map: [gui-module-map.md](gui-module-map.md)
+- local build guide: [LOCAL_BUILD.md](LOCAL_BUILD.md)
 
-For a helpful introduction see Martin Lewis' page
+## Current local build outputs
 
-https://skyinspector.co.uk/use-of-plop/
+A successful local Qt build produces these runtime artifacts in `build-qt/bin`:
 
-## Local build
+- `plop_cli.exe`
+- `plop_gui_qt.exe`
+- `z88i1plop.exe`
+- `z88i2plop.exe`
 
-The repository now supports a local MinGW build through CMake.
+The runtime directory is also populated with:
 
-Core and Z88 tools:
+- Qt DLLs and plugins via `windeployqt`
+- `z88.dyn`
+- `z88i4.txt`
+- `GuiPlop Users Manual.pdf`
+- `autocell/` when present in the source tree
+
+## Quick start
+
+CLI/core only:
 
 ```powershell
 cmake -S . -B build -G Ninja -DPLOP_BUILD_QT_GUI=OFF
 cmake --build build
 ```
 
-Outputs are written to `build/bin`:
-
-- `plop_cli.exe`
-- `z88i1plop.exe`
-- `z88i2plop.exe`
-
-Runtime assets such as `z88.dyn`, `z88i4.txt`, the user manual, and `autocell/` are staged into the same output directory.
-
-## Qt GUI
-
-If Qt Widgets is installed and discoverable by CMake, enable the Qt frontend:
+Full Qt build on this machine layout:
 
 ```powershell
-cmake -S . -B build -G Ninja
-cmake --build build
+.\build-local-qt.ps1 -Clean
 ```
 
-This produces `build/bin/plop_gui_qt.exe`. The Qt GUI uses app-relative runtime files and `QSettings`; it does not depend on the legacy installer registry keys.
+## Qt installation path used locally
 
-One local Windows path that is known to work is `aqtinstall` plus the official Qt MinGW toolchain:
+The local Qt workflow was validated with:
 
-```powershell
-py -m pip install --user aqtinstall
-py -m aqt install-qt -O $env:USERPROFILE\Qt windows desktop 6.8.3 win64_mingw
-py -m aqt install-tool -O $env:USERPROFILE\Qt windows desktop tools_mingw1310 qt.tools.win64_mingw1310
-```
+- `Qt 6.8.3`
+- `mingw_64`
+- `Tools\mingw1310_64`
+- installed under `C:\Users\matteo\Qt`
 
-After that, the repository includes a helper script that configures, builds, and deploys the Qt runtime:
+If Qt is not installed yet, see [LOCAL_BUILD.md](LOCAL_BUILD.md) for the exact `aqtinstall` commands.
 
-```powershell
-.\build-local-qt.ps1
-```
+## Legacy installer
+
+The original project README/release flow pointed users to the packaged installer:
+
+https://github.com/davidlewistoronto/plop/releases/download/3.0.7/gui_plop_setup_3_0_7.exe
+
+That installer path remains relevant for end users of the historical VCL application, but source development can now proceed through the local CMake flow described above.
+
+## References
+
+- manual PDF in this repository
+- GitHub release installer link above
+- Martin Lewis introduction: https://skyinspector.co.uk/use-of-plop/
